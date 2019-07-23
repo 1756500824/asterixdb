@@ -98,6 +98,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
                 // Failure but we know we can for sure push the previously parsed records safely
                 failure = e;
                 try {
+
                     flush();
                 } catch (Exception flushException) {
                     flushException.addSuppressed(e);

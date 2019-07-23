@@ -19,15 +19,8 @@
 package org.apache.asterix.utils;
 
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.asterix.app.result.ResponsePrinter;
 import org.apache.asterix.app.translator.DefaultStatementExecutorFactory;
@@ -114,9 +107,11 @@ import org.apache.hyracks.api.dataflow.ConnectorDescriptorId;
 import org.apache.hyracks.api.dataflow.IConnectorDescriptor;
 import org.apache.hyracks.api.dataflow.IOperatorDescriptor;
 import org.apache.hyracks.api.dataflow.OperatorDescriptorId;
+import org.apache.hyracks.api.dataflow.value.ITuplePartitionComputerFactory;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.api.io.FileSplit;
 import org.apache.hyracks.api.job.JobSpecification;
+import org.apache.hyracks.dataflow.common.data.partition.RandomPartitionComputerFactory;
 import org.apache.hyracks.dataflow.std.connectors.MToNPartitioningConnectorDescriptor;
 import org.apache.hyracks.dataflow.std.connectors.MToNPartitioningWithMessageConnectorDescriptor;
 import org.apache.hyracks.dataflow.std.connectors.OneToOneConnectorDescriptor;
@@ -136,7 +131,7 @@ public class FeedOperations {
     }
 
     private static Pair<JobSpecification, IAdapterFactory> buildFeedIntakeJobSpec(Feed feed,
-            MetadataProvider metadataProvider, FeedPolicyAccessor policyAccessor) throws Exception {
+                                                                                  MetadataProvider metadataProvider, FeedPolicyAccessor policyAccessor) throws Exception {
         JobSpecification spec = RuntimeUtils.createJobSpecification(metadataProvider.getApplicationContext());
         spec.setFrameSize(metadataProvider.getApplicationContext().getCompilerProperties().getFrameSize());
         IAdapterFactory adapterFactory;
@@ -234,7 +229,7 @@ public class FeedOperations {
     }
 
     private static JobSpecification getConnectionJob(MetadataProvider metadataProvider, FeedConnection feedConn,
-            IStatementExecutor statementExecutor, IHyracksClientConnection hcc, Boolean insertFeed)
+                                                     IStatementExecutor statementExecutor, IHyracksClientConnection hcc, Boolean insertFeed)
             throws AlgebricksException, RemoteException, ACIDException {
         metadataProvider.getConfig().put(FeedActivityDetails.FEED_POLICY_NAME, feedConn.getPolicyName());
         Query feedConnQuery = makeConnectionQuery(feedConn);
@@ -254,8 +249,8 @@ public class FeedOperations {
     }
 
     private static JobSpecification combineIntakeCollectJobs(MetadataProvider metadataProvider, Feed feed,
-            JobSpecification intakeJob, List<JobSpecification> jobsList, List<FeedConnection> feedConnections,
-            String[] intakeLocations) throws AlgebricksException, HyracksDataException {
+                                                             JobSpecification intakeJob, List<JobSpecification> jobsList, List<FeedConnection> feedConnections,
+                                                             String[] intakeLocations) throws AlgebricksException, HyracksDataException {
         JobSpecification jobSpec = new JobSpecification(intakeJob.getFrameSize());
 
         // copy ingestor
@@ -286,6 +281,10 @@ public class FeedOperations {
         FeedMetaOperatorDescriptor metaOp;
 
         for (int iter1 = 0; iter1 < jobsList.size(); iter1++) {
+            // Distribute operators to multiple nodes
+//            List<OperatorDescriptorId> storageOperatorIds = new ArrayList<>();
+//            OperatorDescriptorId endOperatorId = null;
+
             FeedConnection curFeedConnection = feedConnections.get(iter1);
             JobSpecification subJob = jobsList.get(iter1);
             operatorIdMapping.clear();
@@ -307,6 +306,7 @@ public class FeedOperations {
                             feedPolicyEntity.getProperties(), FeedRuntimeType.STORE);
                     opId = metaOp.getOperatorId();
                     opDesc.setOperatorId(opId);
+//                    storageOperatorIds.add(opId);
                 } else {
                     if (opDesc instanceof AlgebricksMetaOperatorDescriptor) {
                         AlgebricksMetaOperatorDescriptor algOp = (AlgebricksMetaOperatorDescriptor) opDesc;
@@ -356,6 +356,10 @@ public class FeedOperations {
                 IOperatorDescriptor leftOpDesc = jobSpec.getOperatorMap().get(leftOp.getLeft().getOperatorId());
                 IOperatorDescriptor rightOpDesc = jobSpec.getOperatorMap().get(rightOp.getLeft().getOperatorId());
                 if (leftOp.getLeft() instanceof FeedCollectOperatorDescriptor) {
+//                    ITuplePartitionComputerFactory tpcf = new RandomPartitionComputerFactory();
+//                    MToNPartitioningWithMessageConnectorDescriptor conn = new
+//                            MToNPartitioningWithMessageConnectorDescriptor(jobSpec, tpcf);
+//                    jobSpec.connect(conn, replicateOp, iter1, leftOpDesc, leftOp.getRight());
                     jobSpec.connect(new OneToOneConnectorDescriptor(jobSpec), replicateOp, iter1, leftOpDesc,
                             leftOp.getRight());
                 }
@@ -392,6 +396,27 @@ public class FeedOperations {
                         break;
                 }
             }
+
+            // distribute the middle operators to more nodes
+//            Queue<OperatorDescriptorId> middleOperatorsIdQueue = new ArrayDeque<>(); // in most case, the operators here make up a list
+//            for (OperatorDescriptorId operatorDescriptorId : storageOperatorIds) {
+//                middleOperatorsIdQueue.clear();
+//                middleOperatorsIdQueue.add(operatorDescriptorId);
+//                List<LocationConstraint> locationConstraintList = operatorLocations.get(operatorDescriptorId);
+//                while (!middleOperatorsIdQueue.isEmpty()) {
+//                    endOperatorId = middleOperatorsIdQueue.poll();
+//                    for (IConnectorDescriptor iConnectorDescriptor : jobSpec.getOperatorInputMap().get(endOperatorId)) {
+//                        OperatorDescriptorId startOperatorId = jobSpec.getConnectorOperatorMap().
+//                                get(iConnectorDescriptor.getConnectorId()).getLeft().getLeft().getOperatorId();
+//                        if (startOperatorId == replicateOp.getOperatorId()) {
+//                            continue;
+//                        } else {
+//                            operatorLocations.put(startOperatorId, locationConstraintList);
+//                            middleOperatorsIdQueue.add(startOperatorId);
+//                        }
+//                    }
+//                }
+//            }
 
             // set absolute location constraints
             for (Entry<OperatorDescriptorId, List<LocationConstraint>> entry : operatorLocations.entrySet()) {
@@ -435,7 +460,7 @@ public class FeedOperations {
     }
 
     private static IStatementExecutor getSQLPPTranslator(MetadataProvider metadataProvider,
-            SessionOutput sessionOutput) {
+                                                         SessionOutput sessionOutput) {
         List<Statement> stmts = new ArrayList<>();
         DefaultStatementExecutorFactory qtFactory = new DefaultStatementExecutorFactory();
         IStatementExecutor translator = qtFactory.create(metadataProvider.getApplicationContext(), stmts, sessionOutput,
