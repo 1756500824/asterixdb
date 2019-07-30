@@ -47,6 +47,8 @@ public class FrameUtils {
     }
 
     public static void flushFrame(ByteBuffer buffer, IFrameWriter writer) throws HyracksDataException {
+//        writer.nextFrame(buffer);
+        // TODO
         writer.nextFrame(buffer);
         buffer.clear();
     }

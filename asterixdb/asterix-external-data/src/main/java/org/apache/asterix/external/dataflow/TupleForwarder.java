@@ -18,6 +18,7 @@
  */
 package org.apache.asterix.external.dataflow;
 
+import org.apache.asterix.external.api.IRecordDataParser;
 import org.apache.asterix.external.util.DataflowUtils;
 import org.apache.hyracks.api.comm.IFrame;
 import org.apache.hyracks.api.comm.IFrameWriter;
@@ -47,7 +48,12 @@ public class TupleForwarder {
         appender.flush(writer);
     }
 
+    public void forwardComplete(IRecordDataParser dataParser) throws HyracksDataException {
+
+    }
+
     public void complete() throws HyracksDataException {
         appender.write(writer, false);
+        // TODO
     }
 }

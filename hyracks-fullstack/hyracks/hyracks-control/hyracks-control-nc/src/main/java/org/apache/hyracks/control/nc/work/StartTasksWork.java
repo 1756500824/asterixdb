@@ -190,6 +190,7 @@ public class StartTasksWork extends AbstractWork {
                 taskIndex++;
             }
         } catch (Exception e) {
+            // TODO FeedCollectOperatorDescriptor has another kinds of Exception
             LOGGER.log(Level.WARN, "Failure starting a task", e);
             // notify cc of start task failure
             List<Exception> exceptions = new ArrayList<>();

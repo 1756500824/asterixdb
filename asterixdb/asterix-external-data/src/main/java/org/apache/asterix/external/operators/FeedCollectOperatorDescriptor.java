@@ -20,10 +20,18 @@ package org.apache.asterix.external.operators;
 
 import java.util.Map;
 
+import org.apache.asterix.common.api.INcApplicationContext;
+import org.apache.asterix.common.exceptions.AsterixException;
+import org.apache.asterix.external.api.IDataParserFactory;
+import org.apache.asterix.external.api.IRecordDataParserFactory;
 import org.apache.asterix.external.feed.management.FeedConnectionId;
+import org.apache.asterix.external.provider.ParserFactoryProvider;
 import org.apache.asterix.external.util.FeedUtils.FeedRuntimeType;
 import org.apache.asterix.om.types.ARecordType;
 import org.apache.asterix.om.types.IAType;
+import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
+import org.apache.hyracks.api.application.INCServiceContext;
+import org.apache.hyracks.api.comm.VSizeFrame;
 import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.api.dataflow.IOperatorNodePushable;
 import org.apache.hyracks.api.dataflow.value.IRecordDescriptorProvider;
@@ -53,6 +61,12 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
     /** The subscription location at which the recipient feed receives tuples from the source feed {SOURCE_FEED_INTAKE_STAGE , SOURCE_FEED_COMPUTE_STAGE} **/
     private final FeedRuntimeType subscriptionLocation;
 
+    /** The recordType for dataParserFactory */
+    private ARecordType recordType;
+
+    /** The configuration for dataParserFactory */
+    private Map<String, String> configuration;
+
     public FeedCollectOperatorDescriptor(JobSpecification spec, FeedConnectionId feedConnectionId, ARecordType atype,
             RecordDescriptor rDesc, Map<String, String> feedPolicyProperties, FeedRuntimeType subscriptionLocation) {
         super(spec, 1, 1);
@@ -67,7 +81,20 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
     public IOperatorNodePushable createPushRuntime(IHyracksTaskContext ctx,
             IRecordDescriptorProvider recordDescProvider, final int partition, int nPartitions)
             throws HyracksDataException {
-        return new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition);
+        FeedCollectOperatorNodePushable feedCollect = new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition);
+        INCServiceContext serviceCtx = ctx.getJobletContext().getServiceContext();
+        INcApplicationContext appCtx = (INcApplicationContext) serviceCtx.getApplicationContext();
+        try {
+            IDataParserFactory dataParserFactory = ParserFactoryProvider.getDataParserFactory(appCtx.getLibraryManager(), configuration);
+            dataParserFactory.setRecordType(recordType);
+            dataParserFactory.configure(configuration);
+            IRecordDataParserFactory<?> recordParserFactory = (IRecordDataParserFactory<?>) dataParserFactory;
+            feedCollect.setDataParser(recordParserFactory.createRecordParser(ctx));
+            feedCollect.setFrame(new VSizeFrame(ctx));
+        } catch (AlgebricksException e) {
+            e.printStackTrace();
+        }
+        return feedCollect;
     }
 
     public FeedConnectionId getFeedConnectionId() {
@@ -89,4 +116,13 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
     public FeedRuntimeType getSubscriptionLocation() {
         return subscriptionLocation;
     }
+
+    public void setRecordType(ARecordType recordType) {
+        this.recordType = recordType;
+    }
+
+    public void setConfiguration(Map<String, String> configuration) {
+        this.configuration = configuration;
+    }
+
 }

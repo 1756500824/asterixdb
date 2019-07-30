@@ -103,6 +103,7 @@ public class SuperActivityOperatorNodePushable implements IOperatorNodePushable 
         for (Entry<ActivityId, IActivity> entry : startActivities.entrySet()) {
             IOperatorNodePushable opPushable =
                     entry.getValue().createPushRuntime(ctx, recordDescProvider, partition, nPartitions);
+
             operatorNodePushablesBFSOrder.add(opPushable);
             operatorNodePushables.put(entry.getKey(), opPushable);
             inputArity += opPushable.getInputArity();

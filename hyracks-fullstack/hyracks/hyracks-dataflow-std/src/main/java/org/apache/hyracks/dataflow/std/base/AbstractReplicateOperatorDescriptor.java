@@ -140,6 +140,7 @@ public abstract class AbstractReplicateOperatorDescriptor extends AbstractOperat
                     }
                     for (int i = 0; i < numberOfNonMaterializedOutputs; i++) {
                         FrameUtils.flushFrame(bufferAccessor, writers[i]);
+                        // TODO
                     }
                 }
 

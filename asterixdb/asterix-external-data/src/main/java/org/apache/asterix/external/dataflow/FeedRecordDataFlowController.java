@@ -78,6 +78,19 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
         Throwable failure = null;
         try {
             this.tupleForwarder = new TupleForwarder(ctx, writer);
+//            while (hasNext()) {
+//                IRawRecord<? extends T> record = next();
+//                if (record == null) {
+//                    flush();
+//                    Thread.sleep(INTERVAL); // NOSONAR: No one notifies the sleeping thread
+//                    continue;
+//                }
+//                tb.reset();
+//                incomingRecordsCount++;
+//                if (!parseAndForward(record)) {
+//                    failedRecordsCount++;
+//                }
+//            }
             while (hasNext()) {
                 IRawRecord<? extends T> record = next();
                 if (record == null) {
@@ -87,7 +100,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
                 }
                 tb.reset();
                 incomingRecordsCount++;
-                if (!parseAndForward(record)) {
+                if (!forward(record)) {
                     failedRecordsCount++;
                 }
             }
@@ -168,6 +181,8 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
         if (th == null) {
             try {
                 tupleForwarder.complete();
+//                tupleForwarder.forwardComplete(dataParser);
+                // TODO
             } catch (Throwable completeFailure) {
                 th = completeFailure;
             }
@@ -189,6 +204,20 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
         tb.addFieldEndOffset();
         addMetaPart(tb, record);
         addPrimaryKeys(tb, record);
+        tupleForwarder.addTuple(tb);
+        return true;
+    }
+
+    private boolean forward(IRawRecord<? extends T> record) throws IOException {
+        try {
+//            byte[] bytes = record.getBytes();
+            tb.addField(record.getBytes(), 0, record.size());
+        } catch (Exception e) {
+            LOGGER.log(Level.WARN, ExternalDataConstants.ERROR_FORWARD_RECORD, e);
+            feedLogManager.logRecord(record.toString(), ExternalDataConstants.ERROR_FORWARD_RECORD);
+            // continue the outer loop
+            return false;
+        }
         tupleForwarder.addTuple(tb);
         return true;
     }

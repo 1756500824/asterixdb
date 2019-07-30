@@ -36,6 +36,8 @@ import org.apache.asterix.common.transactions.TxnId;
 import org.apache.asterix.common.utils.StoragePathUtil;
 import org.apache.asterix.compiler.provider.SqlppCompilationProvider;
 import org.apache.asterix.external.api.IAdapterFactory;
+import org.apache.asterix.external.api.IRecordDataParser;
+import org.apache.asterix.external.api.IRecordDataParserFactory;
 import org.apache.asterix.external.feed.management.FeedConnectionId;
 import org.apache.asterix.external.feed.policy.FeedPolicyAccessor;
 import org.apache.asterix.external.feed.watch.FeedActivityDetails;
@@ -280,10 +282,12 @@ public class FeedOperations {
         Map<Integer, TxnId> txnIdMap = new HashMap<>();
         FeedMetaOperatorDescriptor metaOp;
 
+//        ingestionOp.getAdaptorFactory().
+
         for (int iter1 = 0; iter1 < jobsList.size(); iter1++) {
             // Distribute operators to multiple nodes
-//            List<OperatorDescriptorId> storageOperatorIds = new ArrayList<>();
-//            OperatorDescriptorId endOperatorId = null;
+            List<OperatorDescriptorId> storageOperatorIds = new ArrayList<>();
+            OperatorDescriptorId endOperatorId = null;
 
             FeedConnection curFeedConnection = feedConnections.get(iter1);
             JobSpecification subJob = jobsList.get(iter1);
@@ -306,7 +310,7 @@ public class FeedOperations {
                             feedPolicyEntity.getProperties(), FeedRuntimeType.STORE);
                     opId = metaOp.getOperatorId();
                     opDesc.setOperatorId(opId);
-//                    storageOperatorIds.add(opId);
+                    storageOperatorIds.add(opId);
                 } else {
                     if (opDesc instanceof AlgebricksMetaOperatorDescriptor) {
                         AlgebricksMetaOperatorDescriptor algOp = (AlgebricksMetaOperatorDescriptor) opDesc;
@@ -356,12 +360,15 @@ public class FeedOperations {
                 IOperatorDescriptor leftOpDesc = jobSpec.getOperatorMap().get(leftOp.getLeft().getOperatorId());
                 IOperatorDescriptor rightOpDesc = jobSpec.getOperatorMap().get(rightOp.getLeft().getOperatorId());
                 if (leftOp.getLeft() instanceof FeedCollectOperatorDescriptor) {
-//                    ITuplePartitionComputerFactory tpcf = new RandomPartitionComputerFactory();
-//                    MToNPartitioningWithMessageConnectorDescriptor conn = new
-//                            MToNPartitioningWithMessageConnectorDescriptor(jobSpec, tpcf);
-//                    jobSpec.connect(conn, replicateOp, iter1, leftOpDesc, leftOp.getRight());
-                    jobSpec.connect(new OneToOneConnectorDescriptor(jobSpec), replicateOp, iter1, leftOpDesc,
-                            leftOp.getRight());
+                    ITuplePartitionComputerFactory tpcf = new RandomPartitionComputerFactory();
+                    MToNPartitioningWithMessageConnectorDescriptor conn = new
+                            MToNPartitioningWithMessageConnectorDescriptor(jobSpec, tpcf);
+                    jobSpec.connect(conn, replicateOp, iter1, leftOpDesc, leftOp.getRight());
+//                    jobSpec.connect(new OneToOneConnectorDescriptor(jobSpec), replicateOp, iter1, leftOpDesc,
+//                            leftOp.getRight());
+                    FeedCollectOperatorDescriptor feedCollect = (FeedCollectOperatorDescriptor) leftOpDesc;
+                    feedCollect.setConfiguration(feed.getConfiguration());
+                    feedCollect.setRecordType(ingestionOp.getAdapterOutputType());
                 }
                 jobSpec.connect(connDesc, leftOpDesc, leftOp.getRight(), rightOpDesc, rightOp.getRight());
             }
@@ -398,25 +405,25 @@ public class FeedOperations {
             }
 
             // distribute the middle operators to more nodes
-//            Queue<OperatorDescriptorId> middleOperatorsIdQueue = new ArrayDeque<>(); // in most case, the operators here make up a list
-//            for (OperatorDescriptorId operatorDescriptorId : storageOperatorIds) {
-//                middleOperatorsIdQueue.clear();
-//                middleOperatorsIdQueue.add(operatorDescriptorId);
-//                List<LocationConstraint> locationConstraintList = operatorLocations.get(operatorDescriptorId);
-//                while (!middleOperatorsIdQueue.isEmpty()) {
-//                    endOperatorId = middleOperatorsIdQueue.poll();
-//                    for (IConnectorDescriptor iConnectorDescriptor : jobSpec.getOperatorInputMap().get(endOperatorId)) {
-//                        OperatorDescriptorId startOperatorId = jobSpec.getConnectorOperatorMap().
-//                                get(iConnectorDescriptor.getConnectorId()).getLeft().getLeft().getOperatorId();
-//                        if (startOperatorId == replicateOp.getOperatorId()) {
-//                            continue;
-//                        } else {
-//                            operatorLocations.put(startOperatorId, locationConstraintList);
-//                            middleOperatorsIdQueue.add(startOperatorId);
-//                        }
-//                    }
-//                }
-//            }
+            Queue<OperatorDescriptorId> middleOperatorsIdQueue = new ArrayDeque<>(); // in most case, the operators here make up a list
+            for (OperatorDescriptorId operatorDescriptorId : storageOperatorIds) {
+                middleOperatorsIdQueue.clear();
+                middleOperatorsIdQueue.add(operatorDescriptorId);
+                List<LocationConstraint> locationConstraintList = operatorLocations.get(operatorDescriptorId);
+                while (!middleOperatorsIdQueue.isEmpty()) {
+                    endOperatorId = middleOperatorsIdQueue.poll();
+                    for (IConnectorDescriptor iConnectorDescriptor : jobSpec.getOperatorInputMap().get(endOperatorId)) {
+                        OperatorDescriptorId startOperatorId = jobSpec.getConnectorOperatorMap().
+                                get(iConnectorDescriptor.getConnectorId()).getLeft().getLeft().getOperatorId();
+                        if (startOperatorId == replicateOp.getOperatorId()) {
+                            continue;
+                        } else {
+                            operatorLocations.put(startOperatorId, locationConstraintList);
+                            middleOperatorsIdQueue.add(startOperatorId);
+                        }
+                    }
+                }
+            }
 
             // set absolute location constraints
             for (Entry<OperatorDescriptorId, List<LocationConstraint>> entry : operatorLocations.entrySet()) {
