@@ -152,6 +152,8 @@ public class FeedIntakeOperatorDescriptor extends AbstractSingleActivityOperator
         return this.adaptorFactoryClassName;
     }
 
-    public Map<String, String> getAdaptorConfiguration() { return this.adaptorConfiguration; }
+    public Map<String, String> getAdaptorConfiguration() {
+        return this.adaptorConfiguration;
+    }
 
 }

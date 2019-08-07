@@ -22,10 +22,11 @@ import java.nio.ByteBuffer;
 
 import org.apache.asterix.common.exceptions.IExceptionHandler;
 import org.apache.asterix.external.util.FeedFrameUtil;
+import org.apache.hyracks.api.comm.IFrameWholeTupleAccessor;
 import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.api.exceptions.ErrorCode;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
-import org.apache.hyracks.dataflow.common.comm.io.FrameTupleAccessor;
+import org.apache.hyracks.dataflow.common.comm.io.FrameWholeTupleAccessor;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,9 +37,9 @@ public class FeedExceptionHandler implements IExceptionHandler {
 
     // TODO: Enable logging
     private final IHyracksTaskContext ctx;
-    private final FrameTupleAccessor fta;
+    private final IFrameWholeTupleAccessor fta;
 
-    public FeedExceptionHandler(IHyracksTaskContext ctx, FrameTupleAccessor fta) {
+    public FeedExceptionHandler(IHyracksTaskContext ctx, IFrameWholeTupleAccessor fta) {
         this.ctx = ctx;
         this.fta = fta;
     }

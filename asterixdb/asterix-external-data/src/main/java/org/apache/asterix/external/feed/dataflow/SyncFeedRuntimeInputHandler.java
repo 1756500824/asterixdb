@@ -20,16 +20,16 @@ package org.apache.asterix.external.feed.dataflow;
 
 import java.nio.ByteBuffer;
 
+import org.apache.hyracks.api.comm.IFrameWholeTupleAccessor;
 import org.apache.hyracks.api.comm.IFrameWriter;
 import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
-import org.apache.hyracks.dataflow.common.comm.io.FrameTupleAccessor;
 import org.apache.hyracks.dataflow.std.base.AbstractUnaryInputUnaryOutputOperatorNodePushable;
 
 public class SyncFeedRuntimeInputHandler extends AbstractUnaryInputUnaryOutputOperatorNodePushable {
     private final FeedExceptionHandler exceptionHandler;
 
-    public SyncFeedRuntimeInputHandler(IHyracksTaskContext ctx, IFrameWriter writer, FrameTupleAccessor fta) {
+    public SyncFeedRuntimeInputHandler(IHyracksTaskContext ctx, IFrameWriter writer, IFrameWholeTupleAccessor fta) {
         this.writer = writer;
         this.exceptionHandler = new FeedExceptionHandler(ctx, fta);
     }

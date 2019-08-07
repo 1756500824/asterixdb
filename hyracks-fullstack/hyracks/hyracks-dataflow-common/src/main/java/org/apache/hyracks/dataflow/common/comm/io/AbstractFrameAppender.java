@@ -21,7 +21,7 @@ package org.apache.hyracks.dataflow.common.comm.io;
 
 import java.nio.ByteBuffer;
 
-//import org.apache.asterix.external.api.IRecordDataParser;
+// import org.apache.asterix.external.api.IRecordDataParser;
 import org.apache.hyracks.api.comm.FrameConstants;
 import org.apache.hyracks.api.comm.FrameHelper;
 import org.apache.hyracks.api.comm.IFrame;
@@ -92,22 +92,11 @@ public class AbstractFrameAppender implements IFrameAppender {
     public void write(IFrameWriter outWriter, boolean clearFrame) throws HyracksDataException {
         getBuffer().clear();
         outWriter.nextFrame(getBuffer());
-        // TODO
         if (clearFrame) {
             frame.reset();
             reset(getBuffer(), true);
         }
     }
-
-//    public void forwardWrite(IFrameWriter outWriter, boolean clearFrame, IRecordDataParser dataParser) throws HyracksDataException {
-//        getBuffer().clear();
-//        outWriter.nextFrame(getBuffer());
-//        // TODO
-//        if (clearFrame) {
-//            frame.reset();
-//            reset(getBuffer(), true);
-//        }
-//    }
 
     protected boolean canHoldNewTuple(int fieldCount, int dataLength) throws HyracksDataException {
         if (hasEnoughSpace(fieldCount, dataLength)) {

@@ -18,8 +18,13 @@
  */
 package org.apache.asterix.external.dataflow;
 
+import java.util.Map;
+
 import org.apache.asterix.external.api.AsterixInputStream;
+import org.apache.asterix.external.api.IRawRecord;
+import org.apache.asterix.external.api.IRecordReader;
 import org.apache.asterix.external.api.IStreamDataParser;
+import org.apache.asterix.external.input.record.reader.stream.StreamRecordReader;
 import org.apache.asterix.external.util.FeedLogManager;
 import org.apache.hyracks.api.comm.IFrameWriter;
 import org.apache.hyracks.api.context.IHyracksTaskContext;
@@ -28,25 +33,42 @@ import org.apache.hyracks.api.exceptions.HyracksDataException;
 public class FeedStreamDataFlowController extends AbstractFeedDataFlowController {
 
     private final IStreamDataParser dataParser;
-    private final AsterixInputStream stream;
+    private final IRecordReader recordReader;
+//    private final AsterixInputStream stream;
     protected long incomingRecordsCount = 0;
 
     public FeedStreamDataFlowController(IHyracksTaskContext ctx, FeedLogManager feedLogManager,
-            IStreamDataParser streamParser, AsterixInputStream inputStream) {
+            IStreamDataParser dataParser, IRecordReader recordReader, Map<String, String> configuration) {
         super(ctx, feedLogManager, 1);
-        this.dataParser = streamParser;
-        this.stream = inputStream;
+        this.dataParser = dataParser;
+        this.recordReader = recordReader;
+//        recordReader = new SemiStructuredRecordReader();
+//        try {
+//            recordReader.configure(inputStream, configuration);
+//        } catch (HyracksDataException e) {
+//            e.printStackTrace();
+//            // TODO deal with the exception
+//        }
+//        recordReader.setController(this);
     }
 
     @Override
     public void start(IFrameWriter writer) throws HyracksDataException {
         try {
             tupleForwarder = new TupleForwarder(ctx, writer);
-            while (true) {
-                if (!parseNext()) {
-                    break;
-                }
-                tb.addFieldEndOffset();
+//            while (true) {
+//                if (!parseNext()) {
+//                    break;
+//                }
+//                tb.addFieldEndOffset();
+//                tupleForwarder.addTuple(tb);
+//                incomingRecordsCount++;
+//            }
+            IRawRecord record;
+            while (recordReader.hasNext()) {
+                record = recordReader.next();
+                tb.reset();
+                tb.addField(record.getBytes(), 0, record.size());
                 tupleForwarder.addTuple(tb);
                 incomingRecordsCount++;
             }
@@ -61,6 +83,7 @@ public class FeedStreamDataFlowController extends AbstractFeedDataFlowController
             try {
                 tb.reset();
                 return dataParser.parse(tb.getDataOutput());
+//                return true;
             } catch (Exception e) {
                 if (!handleException(e)) {
                     throw e;
@@ -72,10 +95,14 @@ public class FeedStreamDataFlowController extends AbstractFeedDataFlowController
     @Override
     public boolean stop(long timeout) throws HyracksDataException {
         try {
-            if (stream.stop()) {
+//            if (stream.stop()) {
+//                return true;
+//            }
+//            stream.close();
+            if (recordReader.stop()) {
                 return true;
             }
-            stream.close();
+            recordReader.close();
         } catch (Exception e) {
             throw HyracksDataException.create(e);
         }
@@ -85,9 +112,11 @@ public class FeedStreamDataFlowController extends AbstractFeedDataFlowController
     private boolean handleException(Throwable th) {
         boolean handled = true;
         try {
-            handled &= stream.handleException(th);
+//            handled &= stream.handleException(th);
+            handled &= recordReader.handleException(th);
             if (handled) {
-                handled &= dataParser.reset(stream);
+//                handled &= dataParser.reset(stream);
+//                handled &= recordReader.
             }
         } catch (Exception e) {
             th.addSuppressed(e);

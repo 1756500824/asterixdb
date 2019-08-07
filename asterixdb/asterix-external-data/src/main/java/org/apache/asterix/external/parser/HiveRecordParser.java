@@ -99,11 +99,7 @@ public class HiveRecordParser implements IRecordDataParser<Writable> {
                 fieldTypeTags[i] = tag.serialize();
             }
             fieldRefs = oi.getAllStructFieldRefs();
-        } catch (
-
-        Exception e)
-
-        {
+        } catch (Exception e) {
             throw HyracksDataException.create(e);
         }
 
@@ -135,7 +131,7 @@ public class HiveRecordParser implements IRecordDataParser<Writable> {
     }
 
     private void parseItem(IAType itemType, Object value, ObjectInspector foi, DataOutput dataOutput,
-            boolean primitiveOnly) throws HyracksDataException {
+                           boolean primitiveOnly) throws HyracksDataException {
         try {
             switch (itemType.getTypeTag()) {
                 case BOOLEAN:

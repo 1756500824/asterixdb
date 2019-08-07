@@ -52,9 +52,7 @@ public class StreamRecordReaderFactory implements IRecordReaderFactory<char[]> {
                     ExternalDataConstants.STREAM_SOCKET_CLIENT));
 
     @Override
-    public DataSourceType getDataSourceType() {
-        return DataSourceType.RECORDS;
-    }
+    public DataSourceType getDataSourceType() { return DataSourceType.RECORDS; }
 
     @Override
     public Class<?> getRecordClass() {
@@ -76,7 +74,11 @@ public class StreamRecordReaderFactory implements IRecordReaderFactory<char[]> {
         } else if (reader.equals(ExternalDataConstants.STREAM_SOCKET_CLIENT)) {
             streamFactory = new SocketClientInputStreamFactory();
         } else {
-            throw new CompilationException(ErrorCode.FEED_UNKNOWN_ADAPTER_NAME);
+            try {
+                streamFactory = (IInputStreamFactory) Class.forName(reader).newInstance();
+            } catch (Exception e) {
+                throw new CompilationException(ErrorCode.FEED_UNKNOWN_ADAPTER_NAME);
+            }
         }
     }
 
@@ -107,4 +109,5 @@ public class StreamRecordReaderFactory implements IRecordReaderFactory<char[]> {
     public List<String> getRecordReaderNames() {
         return recordReaderNames;
     }
+
 }

@@ -20,12 +20,7 @@ package org.apache.hyracks.dataflow.common.comm.io;
 
 import java.nio.ByteBuffer;
 
-import org.apache.hyracks.api.comm.IFrame;
-import org.apache.hyracks.api.comm.IFrameAppender;
-import org.apache.hyracks.api.comm.IFrameFieldAppender;
-import org.apache.hyracks.api.comm.IFrameTupleAccessor;
-import org.apache.hyracks.api.comm.IFrameTupleAppender;
-import org.apache.hyracks.api.comm.IFrameWriter;
+import org.apache.hyracks.api.comm.*;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 
 /**
@@ -72,7 +67,7 @@ public class FrameFixedFieldTupleAppender implements IFrameTupleAppender, IFrame
     }
 
     @Override
-    public boolean append(IFrameTupleAccessor tupleAccessor, int tIndex) throws HyracksDataException {
+    public boolean append(IFrameWholeTupleAccessor tupleAccessor, int tIndex) throws HyracksDataException {
         resetAppenderIfNecessary(tupleAppender);
         return tupleAppender.append(tupleAccessor, tIndex);
     }
@@ -97,7 +92,7 @@ public class FrameFixedFieldTupleAppender implements IFrameTupleAppender, IFrame
     }
 
     @Override
-    public boolean append(IFrameTupleAccessor tupleAccessor, int tStartOffset, int tEndOffset)
+    public boolean append(IFrameWholeTupleAccessor tupleAccessor, int tStartOffset, int tEndOffset)
             throws HyracksDataException {
         resetAppenderIfNecessary(tupleAppender);
         return tupleAppender.append(tupleAccessor, tStartOffset, tEndOffset);

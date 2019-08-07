@@ -18,9 +18,8 @@
  */
 package org.apache.hyracks.api.comm;
 
-import java.nio.ByteBuffer;
+public interface IFrameTupleAccessor extends IFrameWholeTupleAccessor {
 
-public interface IFrameTupleAccessor {
     int getFieldCount();
 
     int getFieldSlotsLength();
@@ -31,18 +30,6 @@ public interface IFrameTupleAccessor {
 
     int getFieldLength(int tupleIndex, int fIdx);
 
-    int getTupleLength(int tupleIndex);
-
-    int getTupleEndOffset(int tupleIndex);
-
-    int getTupleStartOffset(int tupleIndex);
-
     int getAbsoluteFieldStartOffset(int tupleIndex, int fIdx);
-
-    int getTupleCount();
-
-    ByteBuffer getBuffer();
-
-    void reset(ByteBuffer buffer);
 
 }

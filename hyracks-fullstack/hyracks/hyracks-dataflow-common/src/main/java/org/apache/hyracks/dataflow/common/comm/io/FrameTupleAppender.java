@@ -20,10 +20,7 @@ package org.apache.hyracks.dataflow.common.comm.io;
 
 import java.nio.ByteBuffer;
 
-import org.apache.hyracks.api.comm.FrameHelper;
-import org.apache.hyracks.api.comm.IFrame;
-import org.apache.hyracks.api.comm.IFrameTupleAccessor;
-import org.apache.hyracks.api.comm.IFrameTupleAppender;
+import org.apache.hyracks.api.comm.*;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.dataflow.common.data.accessors.ITupleReference;
 import org.apache.hyracks.util.IntSerDeUtils;
@@ -128,7 +125,7 @@ public class FrameTupleAppender extends AbstractFrameAppender implements IFrameT
     }
 
     @Override
-    public boolean append(IFrameTupleAccessor tupleAccessor, int tStartOffset, int tEndOffset)
+    public boolean append(IFrameWholeTupleAccessor tupleAccessor, int tStartOffset, int tEndOffset)
             throws HyracksDataException {
         int length = tEndOffset - tStartOffset;
         if (canHoldNewTuple(0, length)) {
@@ -145,7 +142,7 @@ public class FrameTupleAppender extends AbstractFrameAppender implements IFrameT
     }
 
     @Override
-    public boolean append(IFrameTupleAccessor tupleAccessor, int tIndex) throws HyracksDataException {
+    public boolean append(IFrameWholeTupleAccessor tupleAccessor, int tIndex) throws HyracksDataException {
         int tStartOffset = tupleAccessor.getTupleStartOffset(tIndex);
         int tEndOffset = tupleAccessor.getTupleEndOffset(tIndex);
         return append(tupleAccessor, tStartOffset, tEndOffset);

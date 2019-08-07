@@ -21,7 +21,6 @@ package org.apache.asterix.external.operators;
 import java.util.Map;
 
 import org.apache.asterix.common.api.INcApplicationContext;
-import org.apache.asterix.common.exceptions.AsterixException;
 import org.apache.asterix.external.api.IDataParserFactory;
 import org.apache.asterix.external.api.IRecordDataParserFactory;
 import org.apache.asterix.external.feed.management.FeedConnectionId;
@@ -81,18 +80,20 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
     public IOperatorNodePushable createPushRuntime(IHyracksTaskContext ctx,
             IRecordDescriptorProvider recordDescProvider, final int partition, int nPartitions)
             throws HyracksDataException {
-        FeedCollectOperatorNodePushable feedCollect = new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition);
+        FeedCollectOperatorNodePushable feedCollect =
+                new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition);
         INCServiceContext serviceCtx = ctx.getJobletContext().getServiceContext();
         INcApplicationContext appCtx = (INcApplicationContext) serviceCtx.getApplicationContext();
         try {
-            IDataParserFactory dataParserFactory = ParserFactoryProvider.getDataParserFactory(appCtx.getLibraryManager(), configuration);
+            IDataParserFactory dataParserFactory =
+                    ParserFactoryProvider.getDataParserFactory(appCtx.getLibraryManager(), configuration);
             dataParserFactory.setRecordType(recordType);
             dataParserFactory.configure(configuration);
             IRecordDataParserFactory<?> recordParserFactory = (IRecordDataParserFactory<?>) dataParserFactory;
             feedCollect.setDataParser(recordParserFactory.createRecordParser(ctx));
-            feedCollect.setFrame(new VSizeFrame(ctx));
         } catch (AlgebricksException e) {
             e.printStackTrace();
+            // TODO deal with the exception
         }
         return feedCollect;
     }

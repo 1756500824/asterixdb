@@ -46,9 +46,13 @@ import org.apache.asterix.external.dataflow.FeedWithMetaDataFlowController;
 import org.apache.asterix.external.dataflow.IndexingDataFlowController;
 import org.apache.asterix.external.dataflow.RecordDataFlowController;
 import org.apache.asterix.external.dataflow.StreamDataFlowController;
+import org.apache.asterix.external.input.record.reader.stream.StreamRecordReader;
+import org.apache.asterix.external.input.record.reader.stream.StreamRecordReaderFactory;
+import org.apache.asterix.external.util.ExternalDataConstants;
 import org.apache.asterix.external.util.ExternalDataUtils;
 import org.apache.asterix.external.util.FeedLogManager;
 import org.apache.asterix.om.types.ARecordType;
+import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
 import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 
@@ -97,9 +101,17 @@ public class DataflowControllerProvider {
                     AsterixInputStream stream = streamFactory.createInputStream(ctx, partition);
                     IStreamDataParserFactory streamParserFactory = (IStreamDataParserFactory) dataParserFactory;
                     IStreamDataParser streamParser = streamParserFactory.createInputStreamParser(ctx, partition);
-                    streamParser.setInputStream(stream);
+//                    streamParser.setInputStream(stream);
+
+                    StreamRecordReaderFactory streamRecordReaderFactory = new StreamRecordReaderFactory();
+                    configuration.put(ExternalDataConstants.KEY_READER, streamFactory.toString().split("@")[0]);
+                    streamRecordReaderFactory.configure(ctx.getJobletContext().getServiceContext(), configuration);
+                    IRecordReader<?> streamRecordReader = streamRecordReaderFactory.createRecordReader(ctx, partition);
+
+
                     if (isFeed) {
-                        return new FeedStreamDataFlowController(ctx, feedLogManager, streamParser, stream);
+                        return new FeedStreamDataFlowController(ctx, feedLogManager, streamParser, streamRecordReader,
+                                configuration);
                     } else {
                         return new StreamDataFlowController(ctx, streamParser);
                     }
@@ -107,8 +119,11 @@ public class DataflowControllerProvider {
                     throw new RuntimeDataException(ErrorCode.PROVIDER_DATAFLOW_CONTROLLER_UNKNOWN_DATA_SOURCE,
                             dataSourceFactory.getDataSourceType());
             }
-        } catch (IOException | AsterixException e) {
+        } catch (IOException | AlgebricksException e) {
             throw HyracksDataException.create(e);
         }
+//        catch (IOException | AsterixException e) {
+//            throw HyracksDataException.create(e);
+//        }
     }
 }

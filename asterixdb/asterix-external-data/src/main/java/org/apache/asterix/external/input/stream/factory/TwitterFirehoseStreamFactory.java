@@ -83,6 +83,11 @@ public class TwitterFirehoseStreamFactory implements IInputStreamFactory {
         return DataSourceType.STREAM;
     }
 
+//    @Override
+//    public DataSourceType getDataSourceType() {
+//        return DataSourceType.RECORDS;
+//    }
+
     @Override
     public void configure(IServiceContext serviceCtx, Map<String, String> configuration) {
         this.serviceCtx = serviceCtx;

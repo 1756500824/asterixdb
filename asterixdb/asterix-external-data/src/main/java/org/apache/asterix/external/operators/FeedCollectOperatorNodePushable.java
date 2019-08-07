@@ -25,26 +25,23 @@ import java.util.Map;
 import org.apache.asterix.active.ActiveManager;
 import org.apache.asterix.active.ActiveRuntimeId;
 import org.apache.asterix.common.api.INcApplicationContext;
-import org.apache.asterix.external.api.IRawRecord;
 import org.apache.asterix.external.api.IRecordDataParser;
-import org.apache.asterix.external.dataflow.TupleForwarder;
 import org.apache.asterix.external.feed.dataflow.FeedRuntimeInputHandler;
 import org.apache.asterix.external.feed.dataflow.SyncFeedRuntimeInputHandler;
 import org.apache.asterix.external.feed.management.FeedConnectionId;
 import org.apache.asterix.external.feed.policy.FeedPolicyAccessor;
 import org.apache.asterix.external.input.record.CharArrayRecord;
 import org.apache.asterix.external.util.DataflowUtils;
-import org.apache.asterix.external.util.ExternalDataConstants;
 import org.apache.asterix.external.util.FeedUtils.FeedRuntimeType;
-import org.apache.hyracks.api.comm.FrameConstants;
 import org.apache.hyracks.api.comm.IFrame;
+import org.apache.hyracks.api.comm.VSizeFrame;
 import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.dataflow.common.comm.io.ArrayTupleBuilder;
+import org.apache.hyracks.dataflow.common.comm.io.FrameWholeTupleAccessor;
+import org.apache.hyracks.dataflow.common.comm.io.FrameWholeTupleAppender;
 import org.apache.hyracks.dataflow.common.comm.io.FrameTupleAccessor;
-import org.apache.hyracks.dataflow.common.comm.io.FrameTupleAppender;
 import org.apache.hyracks.dataflow.std.base.AbstractUnaryInputUnaryOutputOperatorNodePushable;
-import org.apache.logging.log4j.Level;
 
 /**
  * The first operator in a collect job in a feed.
@@ -56,9 +53,11 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
     private final FeedPolicyAccessor policyAccessor;
     private final ActiveManager activeManager;
     private final IHyracksTaskContext ctx;
+    private FrameWholeTupleAccessor tAccessor;
+    private CharArrayRecord record;
     private IRecordDataParser dataParser;
     private IFrame frame;
-    private FrameTupleAppender appender;
+    private FrameWholeTupleAppender appender;
     private ArrayTupleBuilder tb = new ArrayTupleBuilder(1);
 
     public FeedCollectOperatorNodePushable(IHyracksTaskContext ctx, FeedConnectionId feedConnectionId,
@@ -76,13 +75,16 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
         try {
             ActiveRuntimeId runtimeId =
                     new ActiveRuntimeId(connectionId.getFeedId(), FeedRuntimeType.COLLECT.toString(), partition);
-            FrameTupleAccessor tAccessor = new FrameTupleAccessor(recordDesc);
+            tAccessor = new FrameWholeTupleAccessor(recordDesc);
             if (policyAccessor.flowControlEnabled()) {
                 writer = new FeedRuntimeInputHandler(ctx, connectionId, runtimeId, writer, policyAccessor, tAccessor,
                         activeManager.getFramePool());
             } else {
                 writer = new SyncFeedRuntimeInputHandler(ctx, writer, tAccessor);
             }
+            frame = new VSizeFrame(ctx);
+            appender = new FrameWholeTupleAppender(frame);
+            record = new CharArrayRecord();
         } catch (Exception e) {
             throw HyracksDataException.create(e);
         }
@@ -95,40 +97,29 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
 
     @Override
     public void nextFrame(ByteBuffer buffer) throws HyracksDataException {
-        FrameTupleAccessor tAccess = new FrameTupleAccessor(recordDesc);
-        tAccess.reset(buffer);
-        appender = new FrameTupleAppender(frame);
-        int nTuple = tAccess.getTupleCount();
+        tAccessor.reset(buffer);
+        int nTuple = tAccessor.getTupleCount();
         int failedRecordsCount = 0;
         for (int tupleIndex = 0; tupleIndex < nTuple; ++tupleIndex) {
-            int startOffset = tAccess.getTupleStartOffset(tupleIndex);
-            int endOffset = tAccess.getTupleEndOffset(tupleIndex);
-            int length = endOffset - startOffset - 4;
-            if (length <= 0) continue;
-            CharArrayRecord record = new CharArrayRecord(length);
-            byte[] tempByte = new byte[length];
-            System.arraycopy(tAccess.getBuffer().array(), startOffset + 4, tempByte, 0, length);
-            char[] tempChar = new String(tempByte).toCharArray();
-            record.set(tempChar);
             try {
+                record.set(tAccessor.getTuple(tupleIndex));
                 tb.reset();
                 if (!parseAndForward(record)) {
                     failedRecordsCount++;
                 }
             } catch (IOException e) {
                 System.out.println("IOException in FeedCollectOperatorNodePushable parse");
+                // TODO deal with the exception
             }
-//            System.out.println(tempChar);
+            //            System.out.println(tempChar);
         }
         writer.nextFrame(appender.getBuffer());
-        // TODO
     }
 
 //    @Override
 //    public void nextFrame(ByteBuffer buffer) throws HyracksDataException {
 //        writer.nextFrame(buffer);
 //    }
-
 
     @Override
     public void fail() throws HyracksDataException {
@@ -149,25 +140,17 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
         this.dataParser = dataParser;
     }
 
-    public void setFrame(IFrame frame) {
-        this.frame = frame;
-    }
-
     private boolean parseAndForward(CharArrayRecord record) throws IOException {
         try {
             dataParser.parse(record, tb.getDataOutput());
         } catch (Exception e) {
-//            LOGGER.log(Level.WARN, ExternalDataConstants.ERROR_PARSE_RECORD, e);
-//            feedLogManager.logRecord(record.toString(), ExternalDataConstants.ERROR_PARSE_RECORD);
-            // continue the outer loop
-            System.out.println("IOException in FeedCollectOperatorNodePushable parse");
+            e.printStackTrace();
+//            System.out.println("IOException in FeedCollectOperatorNodePushable parse");
             return false;
+            // TODO deal with the exception
         }
         tb.addFieldEndOffset();
-        DataflowUtils.addTupleToFrame(appender, tb, writer);
-//        addMetaPart(tb, record);
-//        addPrimaryKeys(tb, record);
-//        tupleForwarder.addTuple(tb);
+        DataflowUtils.addWholeTupleToFrame(appender, tb, writer);
         return true;
     }
 

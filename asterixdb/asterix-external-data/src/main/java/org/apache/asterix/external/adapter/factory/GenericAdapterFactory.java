@@ -26,17 +26,12 @@ import org.apache.asterix.common.api.IApplicationContext;
 import org.apache.asterix.common.api.INcApplicationContext;
 import org.apache.asterix.common.dataflow.ICcApplicationContext;
 import org.apache.asterix.common.library.ILibraryManager;
-import org.apache.asterix.external.api.IAdapterFactory;
-import org.apache.asterix.external.api.IDataFlowController;
-import org.apache.asterix.external.api.IDataParserFactory;
-import org.apache.asterix.external.api.IDataSourceAdapter;
-import org.apache.asterix.external.api.IExternalDataSourceFactory;
-import org.apache.asterix.external.api.IIndexibleExternalDataSource;
-import org.apache.asterix.external.api.IIndexingAdapterFactory;
+import org.apache.asterix.external.api.*;
 import org.apache.asterix.external.dataflow.AbstractFeedDataFlowController;
 import org.apache.asterix.external.dataset.adapter.FeedAdapter;
 import org.apache.asterix.external.dataset.adapter.GenericAdapter;
 import org.apache.asterix.external.indexing.ExternalFile;
+import org.apache.asterix.external.input.record.reader.stream.StreamRecordReaderFactory;
 import org.apache.asterix.external.parser.factory.ADMDataParserFactory;
 import org.apache.asterix.external.provider.DataflowControllerProvider;
 import org.apache.asterix.external.provider.DatasourceFactoryProvider;
@@ -146,6 +141,17 @@ public class GenericAdapterFactory implements IIndexingAdapterFactory, IAdapterF
         ExternalDataUtils.validateDataSourceParameters(configuration);
         dataSourceFactory =
                 DatasourceFactoryProvider.getExternalDataSourceFactory(appCtx.getLibraryManager(), configuration);
+//        try {
+//            if (!ExternalDataUtils.getDataSourceType(configuration).equals(IExternalDataSourceFactory.DataSourceType.RECORDS)
+//                    && dataSourceFactory instanceof IInputStreamFactory) {
+//                StreamRecordReaderFactory iRecordReaderFactory = StreamRecordReaderFactory.class.newInstance();
+//                IInputStreamFactory iInputStreamFactory = (IInputStreamFactory) dataSourceFactory;
+//                iRecordReaderFactory.setStreamFactory(iInputStreamFactory);
+//                dataSourceFactory = iRecordReaderFactory;
+//            }
+//        } catch (Exception e) {
+//            // TODO deal with the exception
+//        }
         if (dataSourceFactory.isIndexible() && (files != null)) {
             ((IIndexibleExternalDataSource) dataSourceFactory).setSnapshot(files, indexingOp);
         }

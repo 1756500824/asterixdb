@@ -23,6 +23,7 @@ import java.util.BitSet;
 import java.util.Random;
 
 import org.apache.hyracks.api.comm.IFrame;
+import org.apache.hyracks.api.comm.IFrameWholeTupleAccessor;
 import org.apache.hyracks.api.comm.VSizeFrame;
 import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
@@ -30,7 +31,7 @@ import org.apache.hyracks.dataflow.common.comm.io.FrameTupleAccessor;
 import org.apache.hyracks.dataflow.common.comm.io.FrameTupleAppender;
 
 public class FeedFrameUtil {
-    public static ByteBuffer removeBadTuple(IHyracksTaskContext ctx, int tupleIndex, FrameTupleAccessor fta)
+    public static ByteBuffer removeBadTuple(IHyracksTaskContext ctx, int tupleIndex, IFrameWholeTupleAccessor fta)
             throws HyracksDataException {
         FrameTupleAppender appender = new FrameTupleAppender();
         IFrame slicedFrame = new VSizeFrame(ctx);

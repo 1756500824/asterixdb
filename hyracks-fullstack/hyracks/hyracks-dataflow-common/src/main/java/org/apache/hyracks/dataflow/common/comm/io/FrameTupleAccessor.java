@@ -37,6 +37,7 @@ import org.apache.hyracks.util.IntSerDeUtils;
  * field slots.
  */
 public class FrameTupleAccessor implements IFrameTupleAccessor {
+
     private final RecordDescriptor recordDescriptor;
     private int tupleCountOffset;
     private ByteBuffer buffer;
