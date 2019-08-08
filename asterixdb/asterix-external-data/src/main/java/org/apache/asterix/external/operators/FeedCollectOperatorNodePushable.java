@@ -39,8 +39,7 @@ import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.dataflow.common.comm.io.ArrayTupleBuilder;
 import org.apache.hyracks.dataflow.common.comm.io.FrameWholeTupleAccessor;
-import org.apache.hyracks.dataflow.common.comm.io.FrameWholeTupleAppender;
-import org.apache.hyracks.dataflow.common.comm.io.FrameTupleAccessor;
+import org.apache.hyracks.dataflow.common.comm.io.FrameTupleAppender;
 import org.apache.hyracks.dataflow.std.base.AbstractUnaryInputUnaryOutputOperatorNodePushable;
 
 /**
@@ -57,7 +56,7 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
     private CharArrayRecord record;
     private IRecordDataParser dataParser;
     private IFrame frame;
-    private FrameWholeTupleAppender appender;
+    private FrameTupleAppender appender;
     private ArrayTupleBuilder tb = new ArrayTupleBuilder(1);
 
     public FeedCollectOperatorNodePushable(IHyracksTaskContext ctx, FeedConnectionId feedConnectionId,
@@ -83,7 +82,7 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
                 writer = new SyncFeedRuntimeInputHandler(ctx, writer, tAccessor);
             }
             frame = new VSizeFrame(ctx);
-            appender = new FrameWholeTupleAppender(frame);
+            appender = new FrameTupleAppender(frame);
             record = new CharArrayRecord();
         } catch (Exception e) {
             throw HyracksDataException.create(e);
@@ -116,10 +115,10 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
         writer.nextFrame(appender.getBuffer());
     }
 
-//    @Override
-//    public void nextFrame(ByteBuffer buffer) throws HyracksDataException {
-//        writer.nextFrame(buffer);
-//    }
+    //    @Override
+    //    public void nextFrame(ByteBuffer buffer) throws HyracksDataException {
+    //        writer.nextFrame(buffer);
+    //    }
 
     @Override
     public void fail() throws HyracksDataException {
@@ -145,12 +144,12 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
             dataParser.parse(record, tb.getDataOutput());
         } catch (Exception e) {
             e.printStackTrace();
-//            System.out.println("IOException in FeedCollectOperatorNodePushable parse");
+            //            System.out.println("IOException in FeedCollectOperatorNodePushable parse");
             return false;
             // TODO deal with the exception
         }
         tb.addFieldEndOffset();
-        DataflowUtils.addWholeTupleToFrame(appender, tb, writer);
+        DataflowUtils.addTupleToFrame(appender, tb, writer);
         return true;
     }
 

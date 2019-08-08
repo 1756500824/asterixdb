@@ -84,9 +84,9 @@ public class ADMDataParser extends AbstractDataParser implements IStreamDataPars
     public ADMDataParser(String filename, ARecordType recordType, boolean isStream) {
         this.filename = filename;
         this.recordType = recordType;
-//        if (!isStream) {
-            this.admLexer = new AdmLexer();
-//        }
+        //        if (!isStream) {
+        this.admLexer = new AdmLexer();
+        //        }
     }
 
     @Override

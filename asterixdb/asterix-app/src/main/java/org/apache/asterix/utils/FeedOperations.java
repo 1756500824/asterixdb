@@ -361,8 +361,8 @@ public class FeedOperations {
                     ITuplePartitionComputerFactory tpcf = new RandomPartitionComputerFactory();
                     MToNPartitioningConnectorDescriptor conn = new MToNPartitioningConnectorDescriptor(jobSpec, tpcf);
                     jobSpec.connect(conn, replicateOp, iter1, leftOpDesc, leftOp.getRight());
-//                    jobSpec.connect(new OneToOneConnectorDescriptor(jobSpec), replicateOp, iter1, leftOpDesc,
-//                            leftOp.getRight());
+                    //                    jobSpec.connect(new OneToOneConnectorDescriptor(jobSpec), replicateOp, iter1, leftOpDesc,
+                    //                            leftOp.getRight());
                     FeedCollectOperatorDescriptor feedCollect = (FeedCollectOperatorDescriptor) leftOpDesc;
                     feedCollect.setConfiguration(feed.getConfiguration());
                     feedCollect.setRecordType(ingestionOp.getAdapterOutputType());

@@ -131,7 +131,7 @@ public class HiveRecordParser implements IRecordDataParser<Writable> {
     }
 
     private void parseItem(IAType itemType, Object value, ObjectInspector foi, DataOutput dataOutput,
-                           boolean primitiveOnly) throws HyracksDataException {
+            boolean primitiveOnly) throws HyracksDataException {
         try {
             switch (itemType.getTypeTag()) {
                 case BOOLEAN:

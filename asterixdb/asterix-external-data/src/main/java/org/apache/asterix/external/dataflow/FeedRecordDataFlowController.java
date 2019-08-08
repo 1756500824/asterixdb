@@ -77,7 +77,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
         }
         Throwable failure = null;
         try {
-            this.tupleForwarder = new TupleForwarder(ctx, writer);
+            this.wholeTupleForwarder = new WholeTupleForwarder(ctx, writer);
             //            while (hasNext()) {
             //                IRawRecord<? extends T> record = next();
             //                if (record == null) {
@@ -180,7 +180,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
         Throwable th = CleanupUtils.close(recordReader, failure);
         if (th == null) {
             try {
-                tupleForwarder.complete();
+                wholeTupleForwarder.complete();
                 //                tupleForwarder.forwardComplete(dataParser);
                 // TODO
             } catch (Throwable completeFailure) {
@@ -204,7 +204,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
         tb.addFieldEndOffset();
         addMetaPart(tb, record);
         addPrimaryKeys(tb, record);
-        tupleForwarder.addTuple(tb);
+        wholeTupleForwarder.addTuple(tb);
         return true;
     }
 
@@ -218,7 +218,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
             // continue the outer loop
             return false;
         }
-        tupleForwarder.addTuple(tb);
+        wholeTupleForwarder.addTuple(tb);
         return true;
     }
 

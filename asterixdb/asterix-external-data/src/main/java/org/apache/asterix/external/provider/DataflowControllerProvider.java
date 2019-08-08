@@ -21,7 +21,6 @@ package org.apache.asterix.external.provider;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.asterix.common.exceptions.AsterixException;
 import org.apache.asterix.common.exceptions.ErrorCode;
 import org.apache.asterix.common.exceptions.RuntimeDataException;
 import org.apache.asterix.external.api.AsterixInputStream;
@@ -46,7 +45,6 @@ import org.apache.asterix.external.dataflow.FeedWithMetaDataFlowController;
 import org.apache.asterix.external.dataflow.IndexingDataFlowController;
 import org.apache.asterix.external.dataflow.RecordDataFlowController;
 import org.apache.asterix.external.dataflow.StreamDataFlowController;
-import org.apache.asterix.external.input.record.reader.stream.StreamRecordReader;
 import org.apache.asterix.external.input.record.reader.stream.StreamRecordReaderFactory;
 import org.apache.asterix.external.util.ExternalDataConstants;
 import org.apache.asterix.external.util.ExternalDataUtils;
@@ -101,13 +99,12 @@ public class DataflowControllerProvider {
                     AsterixInputStream stream = streamFactory.createInputStream(ctx, partition);
                     IStreamDataParserFactory streamParserFactory = (IStreamDataParserFactory) dataParserFactory;
                     IStreamDataParser streamParser = streamParserFactory.createInputStreamParser(ctx, partition);
-//                    streamParser.setInputStream(stream);
+                    //                    streamParser.setInputStream(stream);
 
                     StreamRecordReaderFactory streamRecordReaderFactory = new StreamRecordReaderFactory();
                     configuration.put(ExternalDataConstants.KEY_READER, streamFactory.toString().split("@")[0]);
                     streamRecordReaderFactory.configure(ctx.getJobletContext().getServiceContext(), configuration);
                     IRecordReader<?> streamRecordReader = streamRecordReaderFactory.createRecordReader(ctx, partition);
-
 
                     if (isFeed) {
                         return new FeedStreamDataFlowController(ctx, feedLogManager, streamParser, streamRecordReader,
@@ -122,8 +119,8 @@ public class DataflowControllerProvider {
         } catch (IOException | AlgebricksException e) {
             throw HyracksDataException.create(e);
         }
-//        catch (IOException | AsterixException e) {
-//            throw HyracksDataException.create(e);
-//        }
+        //        catch (IOException | AsterixException e) {
+        //            throw HyracksDataException.create(e);
+        //        }
     }
 }

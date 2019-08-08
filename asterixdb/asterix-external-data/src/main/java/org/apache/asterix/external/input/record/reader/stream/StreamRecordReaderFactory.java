@@ -52,7 +52,9 @@ public class StreamRecordReaderFactory implements IRecordReaderFactory<char[]> {
                     ExternalDataConstants.STREAM_SOCKET_CLIENT));
 
     @Override
-    public DataSourceType getDataSourceType() { return DataSourceType.RECORDS; }
+    public DataSourceType getDataSourceType() {
+        return DataSourceType.RECORDS;
+    }
 
     @Override
     public Class<?> getRecordClass() {

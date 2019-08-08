@@ -16,21 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hyracks.api.comm;
+package org.apache.asterix.external.api;
 
-import java.nio.ByteBuffer;
+import org.apache.hyracks.api.exceptions.HyracksDataException;
+import org.apache.hyracks.dataflow.common.comm.io.ArrayTupleBuilder;
 
-public interface IFrameWholeTupleAccessor {
+public interface IForwarder {
+    void addTuple(ArrayTupleBuilder tb) throws HyracksDataException;
 
-    int getTupleLength(int tupleIndex);
+    void flush() throws HyracksDataException;
 
-    int getTupleEndOffset(int tupleIndex);
-
-    int getTupleStartOffset(int tupleIndex);
-
-    int getTupleCount();
-
-    ByteBuffer getBuffer();
-
-    void reset(ByteBuffer buffer);
+    void complete() throws HyracksDataException;
 }
+

@@ -16,21 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hyracks.api.comm;
+package org.apache.asterix.external.util;
 
-import java.nio.ByteBuffer;
+import org.apache.asterix.external.api.IRawRecord;
+import org.apache.asterix.external.api.IRecordDataParser;
+import org.apache.hyracks.dataflow.common.comm.io.ArrayTupleBuilder;
 
-public interface IFrameWholeTupleAccessor {
+import java.io.IOException;
 
-    int getTupleLength(int tupleIndex);
+public class FeedRecordUtils {
+    protected IRecordDataParser dataParser;
+    protected void addMetaPart(ArrayTupleBuilder tb, IRawRecord<?> record) throws IOException {
+    }
 
-    int getTupleEndOffset(int tupleIndex);
-
-    int getTupleStartOffset(int tupleIndex);
-
-    int getTupleCount();
-
-    ByteBuffer getBuffer();
-
-    void reset(ByteBuffer buffer);
+    protected void addPrimaryKeys(ArrayTupleBuilder tb, IRawRecord<?> record) throws IOException {
+    }
 }

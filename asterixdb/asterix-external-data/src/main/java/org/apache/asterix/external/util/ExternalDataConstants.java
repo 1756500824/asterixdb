@@ -229,5 +229,5 @@ public class ExternalDataConstants {
     public static final String FORMAT_CSV = "csv";
 
     public static final String ERROR_PARSE_RECORD = "Parser failed to parse record";
-    public static final String ERROR_FORWARD_RECORD = "Forwarder failed to forward record";
+    public static final String ERROR_FORWARD_RECORD = "IForwarder failed to forward record";
 }

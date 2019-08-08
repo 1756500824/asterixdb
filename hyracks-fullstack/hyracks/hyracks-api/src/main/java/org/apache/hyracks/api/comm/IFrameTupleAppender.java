@@ -31,7 +31,8 @@ public interface IFrameTupleAppender extends IFrameAppender {
 
     boolean appendSkipEmptyField(int[] fieldSlots, byte[] bytes, int offset, int length) throws HyracksDataException;
 
-    boolean append(IFrameWholeTupleAccessor tupleAccessor, int tStartOffset, int tEndOffset) throws HyracksDataException;
+    boolean append(IFrameWholeTupleAccessor tupleAccessor, int tStartOffset, int tEndOffset)
+            throws HyracksDataException;
 
     boolean appendConcat(IFrameTupleAccessor accessor0, int tIndex0, IFrameTupleAccessor accessor1, int tIndex1)
             throws HyracksDataException;
