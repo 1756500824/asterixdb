@@ -21,10 +21,14 @@ package org.apache.asterix.external.operators;
 import java.util.Map;
 
 import org.apache.asterix.common.api.INcApplicationContext;
-import org.apache.asterix.external.api.IDataParserFactory;
-import org.apache.asterix.external.api.IRecordDataParserFactory;
+import org.apache.asterix.external.api.*;
 import org.apache.asterix.external.feed.management.FeedConnectionId;
+import org.apache.asterix.external.parser.controller.ChangeFeedParserController;
+import org.apache.asterix.external.parser.controller.ChangeFeedWithMetaParserController;
+import org.apache.asterix.external.parser.controller.FeedParserController;
+import org.apache.asterix.external.parser.controller.FeedWithMetaParserController;
 import org.apache.asterix.external.provider.ParserFactoryProvider;
+import org.apache.asterix.external.util.ExternalDataUtils;
 import org.apache.asterix.external.util.FeedUtils.FeedRuntimeType;
 import org.apache.asterix.om.types.ARecordType;
 import org.apache.asterix.om.types.IAType;
@@ -89,7 +93,23 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
             dataParserFactory.setRecordType(recordType);
             dataParserFactory.configure(configuration);
             IRecordDataParserFactory<?> recordParserFactory = (IRecordDataParserFactory<?>) dataParserFactory;
-            feedCollect.setDataParser(recordParserFactory.createRecordParser(ctx));
+            IRecordDataParser<?> dataParser = recordParserFactory.createRecordParser(ctx);
+            FeedParserController feedParserController;
+            boolean isChangeFeed = ExternalDataUtils.isChangeFeed(configuration);
+            boolean isRecordWithMeta = ExternalDataUtils.isRecordWithMeta(configuration);
+            if (isRecordWithMeta) {
+                if (isChangeFeed) {
+                    feedParserController =
+                            new ChangeFeedWithMetaParserController((IRecordWithMetadataParser) dataParser);
+                } else {
+                    feedParserController = new FeedWithMetaParserController((IRecordWithMetadataParser) dataParser);
+                }
+            } else if (isChangeFeed) {
+                feedParserController = new ChangeFeedParserController((IRecordWithPKDataParser) dataParser);
+            } else {
+                feedParserController = new FeedParserController(dataParser);
+            }
+            feedCollect.setFeedParserController(feedParserController);
         } catch (AlgebricksException e) {
             e.printStackTrace();
             // TODO deal with the exception

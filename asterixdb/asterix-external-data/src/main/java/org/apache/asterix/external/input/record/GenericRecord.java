@@ -24,11 +24,14 @@ public class GenericRecord<T> implements IRawRecord<T> {
 
     private T record;
 
+    //    private Class<T> type;
+
     public GenericRecord() {
     }
 
     public GenericRecord(T record) {
         this.record = record;
+        //        this.type = record.g;
     }
 
     @Override

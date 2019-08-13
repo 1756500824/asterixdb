@@ -27,7 +27,6 @@ import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.dataflow.common.comm.io.ArrayTupleBuilder;
 
 public class ChangeFeedWithMetaDataFlowController<T> extends FeedWithMetaDataFlowController<T> {
-
     public ChangeFeedWithMetaDataFlowController(final IHyracksTaskContext ctx, final FeedLogManager feedLogManager,
             final int numOfOutputFields, final IRecordWithMetadataParser<T> dataParser,
             final IRecordReader<T> recordReader) throws HyracksDataException {
@@ -39,4 +38,5 @@ public class ChangeFeedWithMetaDataFlowController<T> extends FeedWithMetaDataFlo
             throws HyracksDataException {
         dataParser.appendLastParsedPrimaryKeyToTuple(tb);
     }
+
 }

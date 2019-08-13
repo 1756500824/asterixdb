@@ -210,6 +210,9 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
 
     private boolean forward(IRawRecord<? extends T> record) throws IOException {
         try {
+            //            if (record instanceof GenericRecord) {
+            //                tb.addField(recor);
+            //            }
             //            byte[] bytes = record.getBytes();
             tb.addField(record.getBytes(), 0, record.size());
         } catch (Exception e) {

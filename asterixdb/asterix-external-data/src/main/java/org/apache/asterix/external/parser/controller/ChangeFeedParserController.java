@@ -16,19 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.asterix.external.util;
+package org.apache.asterix.external.parser.controller;
 
 import org.apache.asterix.external.api.IRawRecord;
-import org.apache.asterix.external.api.IRecordDataParser;
+import org.apache.asterix.external.api.IRecordWithPKDataParser;
+import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.dataflow.common.comm.io.ArrayTupleBuilder;
 
-import java.io.IOException;
+public class ChangeFeedParserController<T> extends FeedParserController<T> {
 
-public class FeedRecordUtils {
-    protected IRecordDataParser dataParser;
-    protected void addMetaPart(ArrayTupleBuilder tb, IRawRecord<?> record) throws IOException {
+    private final IRecordWithPKDataParser<T> dataParser;
+
+    public ChangeFeedParserController(IRecordWithPKDataParser<T> dataParser) {
+        super(dataParser);
+        this.dataParser = dataParser;
     }
 
-    protected void addPrimaryKeys(ArrayTupleBuilder tb, IRawRecord<?> record) throws IOException {
+    @Override
+    public void addPrimaryKeys(final ArrayTupleBuilder tb, final IRawRecord<? extends T> record)
+            throws HyracksDataException {
+        dataParser.appendKeys(tb, record);
     }
 }

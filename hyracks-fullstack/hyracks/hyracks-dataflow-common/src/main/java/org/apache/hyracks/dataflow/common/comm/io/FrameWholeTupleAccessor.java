@@ -83,7 +83,7 @@ public class FrameWholeTupleAccessor implements IFrameWholeTupleAccessor {
         stringBuilder = new StringBuilder();
         byte[] tempByte = buffer.array();
         for (int i = from; i < to; ++i)
-            stringBuilder.append((char)tempByte[i]);
+            stringBuilder.append((char) tempByte[i]);
         return stringBuilder;
     }
 }
