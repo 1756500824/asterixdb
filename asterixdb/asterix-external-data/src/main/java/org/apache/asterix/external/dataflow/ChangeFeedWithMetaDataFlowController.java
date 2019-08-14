@@ -29,8 +29,8 @@ import org.apache.hyracks.dataflow.common.comm.io.ArrayTupleBuilder;
 public class ChangeFeedWithMetaDataFlowController<T> extends FeedWithMetaDataFlowController<T> {
     public ChangeFeedWithMetaDataFlowController(final IHyracksTaskContext ctx, final FeedLogManager feedLogManager,
             final int numOfOutputFields, final IRecordWithMetadataParser<T> dataParser,
-            final IRecordReader<T> recordReader) throws HyracksDataException {
-        super(ctx, feedLogManager, numOfOutputFields, dataParser, recordReader);
+            final IRecordReader<T> recordReader, boolean isChangeOrMeta) throws HyracksDataException {
+        super(ctx, feedLogManager, numOfOutputFields, dataParser, recordReader, isChangeOrMeta);
     }
 
     @Override

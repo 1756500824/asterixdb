@@ -41,7 +41,7 @@ create type feeds.TweetType as
 create  dataset Tweets(TweetType) primary key id;
 create  feed TweetFeed with {
   "adapter-name" : "localfs",
-  "path" : "localhost:///home/hqy/Workspace/data/data.adm",
+  "path" : "asterix_nc1://data/twitter/obamatweets.adm",
   "format": "adm",
   "type-name" : "TweetType",
   "tuple-interval" : "10"

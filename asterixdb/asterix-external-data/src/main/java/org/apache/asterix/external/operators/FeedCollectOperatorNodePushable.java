@@ -58,15 +58,17 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
     private IFrame frame;
     private FrameTupleAppender appender;
     private ArrayTupleBuilder tb = new ArrayTupleBuilder(1);
+    private boolean isChangeOrMeta;
 
     public FeedCollectOperatorNodePushable(IHyracksTaskContext ctx, FeedConnectionId feedConnectionId,
-            Map<String, String> feedPolicy, int partition) {
+            Map<String, String> feedPolicy, int partition, boolean isChangeOrMeta) {
         this.ctx = ctx;
         this.partition = partition;
         this.connectionId = feedConnectionId;
         this.policyAccessor = new FeedPolicyAccessor(feedPolicy);
         this.activeManager = (ActiveManager) ((INcApplicationContext) ctx.getJobletContext().getServiceContext()
                 .getApplicationContext()).getActiveManager();
+        this.isChangeOrMeta = isChangeOrMeta;
     }
 
     @Override
@@ -96,29 +98,28 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
 
     @Override
     public void nextFrame(ByteBuffer buffer) throws HyracksDataException {
-        tAccessor.reset(buffer);
-        int nTuple = tAccessor.getTupleCount();
-        int failedRecordsCount = 0;
-        for (int tupleIndex = 0; tupleIndex < nTuple; ++tupleIndex) {
-            try {
-                record.set(tAccessor.getTuple(tupleIndex));
-                tb.reset();
-                if (!parseAndForward(record)) {
-                    failedRecordsCount++;
+        if (isChangeOrMeta) {
+            writer.nextFrame(buffer);
+        } else {
+            tAccessor.reset(buffer);
+            int nTuple = tAccessor.getTupleCount();
+            int failedRecordsCount = 0;
+            for (int tupleIndex = 0; tupleIndex < nTuple; ++tupleIndex) {
+                try {
+                    record.set(tAccessor.getTuple(tupleIndex));
+                    tb.reset();
+                    if (!parseAndForward(record)) {
+                        failedRecordsCount++;
+                    }
+                } catch (IOException e) {
+                    System.out.println("IOException in FeedCollectOperatorNodePushable parse");
+                    // TODO deal with the exception
                 }
-            } catch (IOException e) {
-                System.out.println("IOException in FeedCollectOperatorNodePushable parse");
-                // TODO deal with the exception
+                //            System.out.println(tempChar);
             }
-            //            System.out.println(tempChar);
+            writer.nextFrame(appender.getBuffer());
         }
-        writer.nextFrame(appender.getBuffer());
     }
-
-    //    @Override
-    //    public void nextFrame(ByteBuffer buffer) throws HyracksDataException {
-    //        writer.nextFrame(buffer);
-    //    }
 
     @Override
     public void fail() throws HyracksDataException {

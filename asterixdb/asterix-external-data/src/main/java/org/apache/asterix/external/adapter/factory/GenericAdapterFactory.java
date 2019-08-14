@@ -140,17 +140,6 @@ public class GenericAdapterFactory implements IIndexingAdapterFactory, IAdapterF
         ExternalDataUtils.validateDataSourceParameters(configuration);
         dataSourceFactory =
                 DatasourceFactoryProvider.getExternalDataSourceFactory(appCtx.getLibraryManager(), configuration);
-        //        try {
-        //            if (!ExternalDataUtils.getDataSourceType(configuration).equals(IExternalDataSourceFactory.DataSourceType.RECORDS)
-        //                    && dataSourceFactory instanceof IInputStreamFactory) {
-        //                StreamRecordReaderFactory iRecordReaderFactory = StreamRecordReaderFactory.class.newInstance();
-        //                IInputStreamFactory iInputStreamFactory = (IInputStreamFactory) dataSourceFactory;
-        //                iRecordReaderFactory.setStreamFactory(iInputStreamFactory);
-        //                dataSourceFactory = iRecordReaderFactory;
-        //            }
-        //        } catch (Exception e) {
-        //            // TODO deal with the exception
-        //        }
         if (dataSourceFactory.isIndexible() && (files != null)) {
             ((IIndexibleExternalDataSource) dataSourceFactory).setSnapshot(files, indexingOp);
         }

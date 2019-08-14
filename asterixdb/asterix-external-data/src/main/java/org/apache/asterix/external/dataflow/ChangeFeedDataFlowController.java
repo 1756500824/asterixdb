@@ -32,8 +32,8 @@ public class ChangeFeedDataFlowController<T> extends FeedRecordDataFlowControlle
 
     public ChangeFeedDataFlowController(final IHyracksTaskContext ctx, final FeedLogManager feedLogManager,
             final int numOfOutputFields, final IRecordWithPKDataParser<T> dataParser,
-            final IRecordReader<T> recordReader) throws HyracksDataException {
-        super(ctx, feedLogManager, numOfOutputFields, dataParser, recordReader);
+            final IRecordReader<T> recordReader, boolean isChangeOrMeta) throws HyracksDataException {
+        super(ctx, feedLogManager, numOfOutputFields, dataParser, recordReader, isChangeOrMeta);
         this.dataParser = dataParser;
     }
 

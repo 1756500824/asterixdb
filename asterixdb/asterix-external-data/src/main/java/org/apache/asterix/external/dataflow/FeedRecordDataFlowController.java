@@ -56,11 +56,14 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
     protected State state = State.CREATED;
     protected long incomingRecordsCount = 0;
     protected long failedRecordsCount = 0;
+    protected boolean isChangeOrMeta;
+    protected TupleForwarder tupleForwarder;
 
     public FeedRecordDataFlowController(IHyracksTaskContext ctx, FeedLogManager feedLogManager, int numOfOutputFields,
-            IRecordDataParser<T> dataParser, IRecordReader<T> recordReader) throws HyracksDataException {
+            IRecordDataParser<T> dataParser, IRecordReader<T> recordReader, boolean isChangeOrMeta) throws HyracksDataException {
         super(ctx, feedLogManager, numOfOutputFields);
         this.dataParser = dataParser;
+        this.isChangeOrMeta = isChangeOrMeta;
         this.recordReader = recordReader;
         recordReader.setFeedLogManager(feedLogManager);
         recordReader.setController(this);
@@ -77,20 +80,8 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
         }
         Throwable failure = null;
         try {
-            this.wholeTupleForwarder = new WholeTupleForwarder(ctx, writer);
-            //            while (hasNext()) {
-            //                IRawRecord<? extends T> record = next();
-            //                if (record == null) {
-            //                    flush();
-            //                    Thread.sleep(INTERVAL); // NOSONAR: No one notifies the sleeping thread
-            //                    continue;
-            //                }
-            //                tb.reset();
-            //                incomingRecordsCount++;
-            //                if (!parseAndForward(record)) {
-            //                    failedRecordsCount++;
-            //                }
-            //            }
+            if (isChangeOrMeta) this.tupleForwarder = new TupleForwarder(ctx, writer);
+            else this.wholeTupleForwarder = new WholeTupleForwarder(ctx, writer);
             while (hasNext()) {
                 IRawRecord<? extends T> record = next();
                 if (record == null) {
@@ -100,8 +91,14 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
                 }
                 tb.reset();
                 incomingRecordsCount++;
-                if (!forward(record)) {
-                    failedRecordsCount++;
+                if (isChangeOrMeta) {
+                    if (!parseAndForward(record)) {
+                        failedRecordsCount++;
+                    }
+                } else {
+                    if (!forward(record)) {
+                        failedRecordsCount++;
+                    }
                 }
             }
         } catch (HyracksDataException e) {
@@ -180,8 +177,9 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
         Throwable th = CleanupUtils.close(recordReader, failure);
         if (th == null) {
             try {
-                wholeTupleForwarder.complete();
-                //                tupleForwarder.forwardComplete(dataParser);
+                if (isChangeOrMeta) tupleForwarder.complete();
+                else wholeTupleForwarder.complete();
+                //
                 // TODO
             } catch (Throwable completeFailure) {
                 th = completeFailure;
@@ -204,16 +202,12 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
         tb.addFieldEndOffset();
         addMetaPart(tb, record);
         addPrimaryKeys(tb, record);
-        wholeTupleForwarder.addTuple(tb);
+        tupleForwarder.addTuple(tb);
         return true;
     }
 
     private boolean forward(IRawRecord<? extends T> record) throws IOException {
         try {
-            //            if (record instanceof GenericRecord) {
-            //                tb.addField(recor);
-            //            }
-            //            byte[] bytes = record.getBytes();
             tb.addField(record.getBytes(), 0, record.size());
         } catch (Exception e) {
             LOGGER.log(Level.WARN, ExternalDataConstants.ERROR_FORWARD_RECORD, e);

@@ -79,17 +79,17 @@ public class DataflowControllerProvider {
                             if (isChangeFeed) {
                                 int numOfKeys = ExternalDataUtils.getNumberOfKeys(configuration);
                                 return new ChangeFeedWithMetaDataFlowController(ctx, feedLogManager, numOfKeys + 2,
-                                        (IRecordWithMetadataParser) dataParser, recordReader);
+                                        (IRecordWithMetadataParser) dataParser, recordReader, true);
                             } else {
                                 return new FeedWithMetaDataFlowController(ctx, feedLogManager, 2,
-                                        (IRecordWithMetadataParser) dataParser, recordReader);
+                                        (IRecordWithMetadataParser) dataParser, recordReader, true);
                             }
                         } else if (isChangeFeed) {
                             int numOfKeys = ExternalDataUtils.getNumberOfKeys(configuration);
                             return new ChangeFeedDataFlowController(ctx, feedLogManager, numOfKeys + 1,
-                                    (IRecordWithPKDataParser) dataParser, recordReader);
+                                    (IRecordWithPKDataParser) dataParser, recordReader, true);
                         } else {
-                            return new FeedRecordDataFlowController(ctx, feedLogManager, 1, dataParser, recordReader);
+                            return new FeedRecordDataFlowController(ctx, feedLogManager, 1, dataParser, recordReader, false);
                         }
                     } else {
                         return new RecordDataFlowController(ctx, dataParser, recordReader, 1);

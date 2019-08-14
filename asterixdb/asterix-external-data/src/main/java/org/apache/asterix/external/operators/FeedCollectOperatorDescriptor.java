@@ -69,8 +69,11 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
     /** The configuration for dataParserFactory */
     private Map<String, String> configuration;
 
+    /** The metaType for dataparserFactory */
+    private ARecordType metaType;
+
     public FeedCollectOperatorDescriptor(JobSpecification spec, FeedConnectionId feedConnectionId, ARecordType atype,
-            RecordDescriptor rDesc, Map<String, String> feedPolicyProperties, FeedRuntimeType subscriptionLocation) {
+                                         RecordDescriptor rDesc, Map<String, String> feedPolicyProperties, FeedRuntimeType subscriptionLocation) {
         super(spec, 1, 1);
         this.outRecDescs[0] = rDesc;
         this.outputType = atype;
@@ -83,8 +86,7 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
     public IOperatorNodePushable createPushRuntime(IHyracksTaskContext ctx,
             IRecordDescriptorProvider recordDescProvider, final int partition, int nPartitions)
             throws HyracksDataException {
-        FeedCollectOperatorNodePushable feedCollect =
-                new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition);
+        FeedCollectOperatorNodePushable feedCollect = null;
         INCServiceContext serviceCtx = ctx.getJobletContext().getServiceContext();
         INcApplicationContext appCtx = (INcApplicationContext) serviceCtx.getApplicationContext();
         try {
@@ -92,6 +94,7 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
                     ParserFactoryProvider.getDataParserFactory(appCtx.getLibraryManager(), configuration);
             dataParserFactory.setRecordType(recordType);
             dataParserFactory.configure(configuration);
+            dataParserFactory.setMetaType(metaType);
             IRecordDataParserFactory<?> recordParserFactory = (IRecordDataParserFactory<?>) dataParserFactory;
             IRecordDataParser<?> dataParser = recordParserFactory.createRecordParser(ctx);
             FeedParserController feedParserController;
@@ -108,6 +111,11 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
                 feedParserController = new ChangeFeedParserController((IRecordWithPKDataParser) dataParser);
             } else {
                 feedParserController = new FeedParserController(dataParser);
+            }
+            if (isChangeFeed || isRecordWithMeta) {
+                feedCollect = new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition, true);
+            } else {
+                feedCollect = new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition, false);
             }
             feedCollect.setFeedParserController(feedParserController);
         } catch (AlgebricksException e) {
@@ -144,5 +152,10 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
     public void setConfiguration(Map<String, String> configuration) {
         this.configuration = configuration;
     }
+
+    public void setMetaType(ARecordType metaType) {
+        this.metaType = metaType;
+    }
+
 
 }
