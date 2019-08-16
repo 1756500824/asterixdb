@@ -60,7 +60,7 @@ public interface IAdapterFactory extends Serializable {
     /**
      * Creates an instance of IDatasourceAdapter.
      *
-     * @param HyracksTaskContext
+     * @param ctx
      * @param partition
      * @return An instance of IDatasourceAdapter.
      * @throws Exception

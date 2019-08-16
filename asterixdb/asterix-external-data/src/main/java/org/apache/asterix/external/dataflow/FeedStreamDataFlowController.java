@@ -53,7 +53,7 @@ public class FeedStreamDataFlowController extends AbstractFeedDataFlowController
     @Override
     public void start(IFrameWriter writer) throws HyracksDataException {
         try {
-            wholeTupleForwarder = new WholeTupleForwarder(ctx, writer);
+            tupleForwarder = new TupleForwarder(ctx, writer);
             //            while (true) {
             //                if (!parseNext()) {
             //                    break;
@@ -67,10 +67,10 @@ public class FeedStreamDataFlowController extends AbstractFeedDataFlowController
                 record = recordReader.next();
                 tb.reset();
                 tb.addField(record.getBytes(), 0, record.size());
-                wholeTupleForwarder.addTuple(tb);
+                tupleForwarder.addTuple(tb);
                 incomingRecordsCount++;
             }
-            wholeTupleForwarder.complete();
+            tupleForwarder.complete();
         } catch (Throwable e) {
             throw HyracksDataException.create(e);
         }
@@ -110,11 +110,11 @@ public class FeedStreamDataFlowController extends AbstractFeedDataFlowController
     private boolean handleException(Throwable th) {
         boolean handled = true;
         try {
-            //            handled &= stream.handleException(th);
+//            handled &= stream.handleException(th);
             handled &= recordReader.handleException(th);
             if (handled) {
-                //                handled &= dataParser.reset(stream);
-                //                handled &= recordReader.
+//                handled &= dataParser.reset(stream);
+//                handled &= recordReader.
             }
         } catch (Exception e) {
             th.addSuppressed(e);

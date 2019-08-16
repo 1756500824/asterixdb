@@ -32,6 +32,8 @@ import org.apache.asterix.external.feed.policy.FeedPolicyAccessor;
 import org.apache.asterix.external.input.record.CharArrayRecord;
 import org.apache.asterix.external.parser.controller.FeedParserController;
 import org.apache.asterix.external.util.DataflowUtils;
+import org.apache.asterix.external.util.ExternalDataConstants;
+import org.apache.asterix.external.util.FeedLogManager;
 import org.apache.asterix.external.util.FeedUtils.FeedRuntimeType;
 import org.apache.hyracks.api.comm.IFrame;
 import org.apache.hyracks.api.comm.VSizeFrame;
@@ -41,34 +43,42 @@ import org.apache.hyracks.dataflow.common.comm.io.ArrayTupleBuilder;
 import org.apache.hyracks.dataflow.common.comm.io.FrameTupleAppender;
 import org.apache.hyracks.dataflow.common.comm.io.FrameWholeTupleAccessor;
 import org.apache.hyracks.dataflow.std.base.AbstractUnaryInputUnaryOutputOperatorNodePushable;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * The first operator in a collect job in a feed.
  */
 public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutputOperatorNodePushable {
 
+    private static final Logger LOGGER = LogManager.getLogger();
     private final int partition;
     private final FeedConnectionId connectionId;
     private final FeedPolicyAccessor policyAccessor;
     private final ActiveManager activeManager;
     private final IHyracksTaskContext ctx;
+    private final boolean canParallel;
+    private final FeedLogManager feedLogManager;
+    private final FeedParserController feedParserController;
     private FrameWholeTupleAccessor tAccessor;
     private CharArrayRecord record;
-    private FeedParserController feedParserController;
     private IFrame frame;
     private FrameTupleAppender appender;
     private ArrayTupleBuilder tb = new ArrayTupleBuilder(1);
-    private boolean isChangeOrMeta;
 
     public FeedCollectOperatorNodePushable(IHyracksTaskContext ctx, FeedConnectionId feedConnectionId,
-            Map<String, String> feedPolicy, int partition, boolean isChangeOrMeta) {
+           Map<String, String> feedPolicy, int partition, boolean canParallel, FeedLogManager feedLogManager,
+           FeedParserController feedParserController) {
         this.ctx = ctx;
         this.partition = partition;
         this.connectionId = feedConnectionId;
         this.policyAccessor = new FeedPolicyAccessor(feedPolicy);
         this.activeManager = (ActiveManager) ((INcApplicationContext) ctx.getJobletContext().getServiceContext()
                 .getApplicationContext()).getActiveManager();
-        this.isChangeOrMeta = isChangeOrMeta;
+        this.canParallel = canParallel;
+        this.feedLogManager = feedLogManager;
+        this.feedParserController = feedParserController;
     }
 
     @Override
@@ -98,9 +108,9 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
 
     @Override
     public void nextFrame(ByteBuffer buffer) throws HyracksDataException {
-        if (isChangeOrMeta) {
-            writer.nextFrame(buffer);
-        } else {
+        if (canParallel) {
+            frame.reset();
+            appender.reset(frame, true);
             tAccessor.reset(buffer);
             int nTuple = tAccessor.getTupleCount();
             int failedRecordsCount = 0;
@@ -112,12 +122,14 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
                         failedRecordsCount++;
                     }
                 } catch (IOException e) {
-                    System.out.println("IOException in FeedCollectOperatorNodePushable parse");
+                    LOGGER.log(Level.WARN, "Exception during parsing", e);
                     // TODO deal with the exception
                 }
                 //            System.out.println(tempChar);
             }
             writer.nextFrame(appender.getBuffer());
+        } else {
+            writer.nextFrame(buffer);
         }
     }
 
@@ -140,8 +152,8 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
         try {
             feedParserController.parse(record, tb.getDataOutput());
         } catch (Exception e) {
-            e.printStackTrace();
-            //            System.out.println("IOException in FeedCollectOperatorNodePushable parse");
+            LOGGER.log(Level.WARN, ExternalDataConstants.ERROR_PARSE_RECORD, e);
+            feedLogManager.logRecord(record.toString(), ExternalDataConstants.ERROR_PARSE_RECORD);
             return false;
             // TODO deal with the exception
         }
@@ -150,10 +162,6 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
         feedParserController.addPrimaryKeys(tb, record);
         DataflowUtils.addTupleToFrame(appender, tb, writer);
         return true;
-    }
-
-    public void setFeedParserController(FeedParserController feedParserController) {
-        this.feedParserController = feedParserController;
     }
 
 }

@@ -303,6 +303,11 @@ public class ExternalDataUtils {
         return Boolean.parseBoolean(configuration.get(ExternalDataConstants.KEY_IS_INSERT_FEED));
     }
 
+    public static boolean isOrderIndependent(Map<String, String> configuration) {
+        return configuration.containsKey(ExternalDataConstants.KEY_IS_ORDER_INDEPENDENT) &&
+                Boolean.parseBoolean(configuration.get(ExternalDataConstants.KEY_IS_ORDER_INDEPENDENT));
+    }
+
     public static int getNumberOfKeys(Map<String, String> configuration) throws AsterixException {
         String keyIndexes = configuration.get(ExternalDataConstants.KEY_KEY_INDEXES);
         if (keyIndexes == null) {

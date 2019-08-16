@@ -52,18 +52,18 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
     private final IRecordDataParser<T> dataParser;
     private final IRecordReader<T> recordReader;
     protected final AtomicBoolean closed = new AtomicBoolean(false);
+    protected final boolean canParallel;
     protected static final long INTERVAL = 1000;
     protected State state = State.CREATED;
     protected long incomingRecordsCount = 0;
     protected long failedRecordsCount = 0;
-    protected boolean isChangeOrMeta;
-    protected TupleForwarder tupleForwarder;
 
     public FeedRecordDataFlowController(IHyracksTaskContext ctx, FeedLogManager feedLogManager, int numOfOutputFields,
-            IRecordDataParser<T> dataParser, IRecordReader<T> recordReader, boolean isChangeOrMeta) throws HyracksDataException {
+            IRecordDataParser<T> dataParser, IRecordReader<T> recordReader, boolean canParallel)
+            throws HyracksDataException {
         super(ctx, feedLogManager, numOfOutputFields);
         this.dataParser = dataParser;
-        this.isChangeOrMeta = isChangeOrMeta;
+        this.canParallel = canParallel;
         this.recordReader = recordReader;
         recordReader.setFeedLogManager(feedLogManager);
         recordReader.setController(this);
@@ -80,8 +80,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
         }
         Throwable failure = null;
         try {
-            if (isChangeOrMeta) this.tupleForwarder = new TupleForwarder(ctx, writer);
-            else this.wholeTupleForwarder = new WholeTupleForwarder(ctx, writer);
+            this.tupleForwarder = new TupleForwarder(ctx, writer);
             while (hasNext()) {
                 IRawRecord<? extends T> record = next();
                 if (record == null) {
@@ -91,7 +90,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
                 }
                 tb.reset();
                 incomingRecordsCount++;
-                if (isChangeOrMeta) {
+                if (canParallel) {
                     if (!parseAndForward(record)) {
                         failedRecordsCount++;
                     }
@@ -177,9 +176,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
         Throwable th = CleanupUtils.close(recordReader, failure);
         if (th == null) {
             try {
-                if (isChangeOrMeta) tupleForwarder.complete();
-                else wholeTupleForwarder.complete();
-                //
+                tupleForwarder.complete();
                 // TODO
             } catch (Throwable completeFailure) {
                 th = completeFailure;
@@ -215,7 +212,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
             // continue the outer loop
             return false;
         }
-        wholeTupleForwarder.addTuple(tb);
+        tupleForwarder.addTuple(tb);
         return true;
     }
 

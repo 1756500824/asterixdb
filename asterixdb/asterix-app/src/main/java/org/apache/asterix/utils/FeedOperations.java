@@ -80,7 +80,6 @@ import org.apache.asterix.metadata.entities.FeedPolicyEntity;
 import org.apache.asterix.metadata.feeds.FeedMetadataUtil;
 import org.apache.asterix.metadata.feeds.LocationConstraint;
 import org.apache.asterix.om.functions.BuiltinFunctions;
-import org.apache.asterix.om.types.ARecordType;
 import org.apache.asterix.runtime.job.listener.JobEventListenerFactory;
 import org.apache.asterix.runtime.job.listener.MultiTransactionJobletEventListenerFactory;
 import org.apache.asterix.runtime.utils.RuntimeUtils;
@@ -255,7 +254,14 @@ public class FeedOperations {
             String[] intakeLocations) throws AlgebricksException, HyracksDataException {
         JobSpecification jobSpec = new JobSpecification(intakeJob.getFrameSize());
 
-        boolean isChangeOrMeta = ExternalDataUtils.isChangeFeed(feed.getConfiguration()) || ExternalDataUtils.isRecordWithMeta(feed.getConfiguration());
+        Map<String, String> configuration = feed.getConfiguration();
+
+        boolean isChangeFeed = ExternalDataUtils.isChangeFeed(configuration);
+        boolean isRecordWithMeta = ExternalDataUtils.isRecordWithMeta(configuration);
+        boolean isFeed = ExternalDataUtils.isFeed(configuration);
+        boolean isOrderIndependent = ExternalDataUtils.isOrderIndependent(configuration);
+
+        boolean canParallel = !isChangeFeed && !isRecordWithMeta && isFeed && isOrderIndependent;
 
         // copy ingestor
         FeedIntakeOperatorDescriptor firstOp =
@@ -290,7 +296,7 @@ public class FeedOperations {
 
         for (int iter1 = 0; iter1 < jobsList.size(); iter1++) {
             // Distribute operators to multiple nodes
-            if (!isChangeOrMeta) {
+            if (canParallel) {
                 storageOperatorIds.clear();
                 endOperatorId = null;
             }
@@ -316,7 +322,7 @@ public class FeedOperations {
                             feedPolicyEntity.getProperties(), FeedRuntimeType.STORE);
                     opId = metaOp.getOperatorId();
                     opDesc.setOperatorId(opId);
-                    if (!isChangeOrMeta) {
+                    if (canParallel) {
                         storageOperatorIds.add(opId);
                     }
                 } else {
@@ -368,19 +374,20 @@ public class FeedOperations {
                 IOperatorDescriptor leftOpDesc = jobSpec.getOperatorMap().get(leftOp.getLeft().getOperatorId());
                 IOperatorDescriptor rightOpDesc = jobSpec.getOperatorMap().get(rightOp.getLeft().getOperatorId());
                 if (leftOp.getLeft() instanceof FeedCollectOperatorDescriptor) {
-                    if (!isChangeOrMeta) {
+                    if (canParallel) {
                         ITuplePartitionComputerFactory tpcf = new RandomPartitionComputerFactory();
-                        MToNPartitioningConnectorDescriptor conn = new MToNPartitioningConnectorDescriptor(jobSpec, tpcf);
+                        MToNPartitioningConnectorDescriptor conn =
+                                new MToNPartitioningConnectorDescriptor(jobSpec, tpcf);
                         jobSpec.connect(conn, replicateOp, iter1, leftOpDesc, leftOp.getRight());
+                        FeedCollectOperatorDescriptor feedCollect = (FeedCollectOperatorDescriptor) leftOpDesc;
+                        feedCollect.setConfiguration(feed.getConfiguration());
+                        feedCollect.setRecordType(ingestionOp.getAdapterOutputType());
+                        feedCollect.setMetaType(FeedMetadataUtil.getOutputType(feed,
+                                feed.getConfiguration().get(ExternalDataConstants.KEY_META_TYPE_NAME)));
                     } else {
                         jobSpec.connect(new OneToOneConnectorDescriptor(jobSpec), replicateOp, iter1, leftOpDesc,
                                 leftOp.getRight());
                     }
-                    FeedCollectOperatorDescriptor feedCollect = (FeedCollectOperatorDescriptor) leftOpDesc;
-                    feedCollect.setConfiguration(feed.getConfiguration());
-                    feedCollect.setRecordType(ingestionOp.getAdapterOutputType());
-                    feedCollect.setMetaType(FeedMetadataUtil.getOutputType(feed,
-                            feed.getConfiguration().get(ExternalDataConstants.KEY_META_TYPE_NAME)));
                 }
                 jobSpec.connect(connDesc, leftOpDesc, leftOp.getRight(), rightOpDesc, rightOp.getRight());
             }
@@ -417,7 +424,7 @@ public class FeedOperations {
             }
 
             // distribute the middle operators to more nodes
-            if (!isChangeOrMeta) {
+            if (canParallel) {
                 Queue<OperatorDescriptorId> middleOperatorsIdQueue = new ArrayDeque<>(); // in most case, the operators here make up a list
                 for (OperatorDescriptorId operatorDescriptorId : storageOperatorIds) {
                     middleOperatorsIdQueue.clear();
@@ -425,7 +432,8 @@ public class FeedOperations {
                     List<LocationConstraint> locationConstraintList = operatorLocations.get(operatorDescriptorId);
                     while (!middleOperatorsIdQueue.isEmpty()) {
                         endOperatorId = middleOperatorsIdQueue.poll();
-                        for (IConnectorDescriptor iConnectorDescriptor : jobSpec.getOperatorInputMap().get(endOperatorId)) {
+                        for (IConnectorDescriptor iConnectorDescriptor : jobSpec.getOperatorInputMap()
+                                .get(endOperatorId)) {
                             OperatorDescriptorId startOperatorId = jobSpec.getConnectorOperatorMap()
                                     .get(iConnectorDescriptor.getConnectorId()).getLeft().getLeft().getOperatorId();
                             if (startOperatorId == replicateOp.getOperatorId()) {

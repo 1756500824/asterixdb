@@ -28,7 +28,7 @@ import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.dataflow.common.comm.io.ArrayTupleBuilder;
 
 public abstract class AbstractFeedDataFlowController implements IDataFlowController, Closeable {
-    protected WholeTupleForwarder wholeTupleForwarder;
+    protected TupleForwarder tupleForwarder;
     protected final IHyracksTaskContext ctx;
     protected final int numOfFields;
     protected final ArrayTupleBuilder tb;
@@ -45,7 +45,7 @@ public abstract class AbstractFeedDataFlowController implements IDataFlowControl
     @Override
     public void flush() throws HyracksDataException {
         flushing = true;
-        wholeTupleForwarder.flush();
+        tupleForwarder.flush();
         flushing = false;
     }
 

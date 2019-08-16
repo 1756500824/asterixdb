@@ -31,7 +31,8 @@ public class FeedWithMetaDataFlowController<T> extends FeedRecordDataFlowControl
     protected final IRecordWithMetadataParser<T> dataParser;
 
     public FeedWithMetaDataFlowController(IHyracksTaskContext ctx, FeedLogManager feedLogManager, int numOfOutputFields,
-            IRecordWithMetadataParser<T> dataParser, IRecordReader<T> recordReader, boolean isChangeOrMeta) throws HyracksDataException {
+            IRecordWithMetadataParser<T> dataParser, IRecordReader<T> recordReader, boolean isChangeOrMeta)
+            throws HyracksDataException {
         super(ctx, feedLogManager, numOfOutputFields, dataParser, recordReader, isChangeOrMeta);
         this.dataParser = dataParser;
     }

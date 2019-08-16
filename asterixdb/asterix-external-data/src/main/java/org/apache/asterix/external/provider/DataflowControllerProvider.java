@@ -75,21 +75,23 @@ public class DataflowControllerProvider {
                     } else if (isFeed) {
                         boolean isChangeFeed = ExternalDataUtils.isChangeFeed(configuration);
                         boolean isRecordWithMeta = ExternalDataUtils.isRecordWithMeta(configuration);
+                        boolean isOrderIndependent = ExternalDataUtils.isOrderIndependent(configuration);
                         if (isRecordWithMeta) {
                             if (isChangeFeed) {
                                 int numOfKeys = ExternalDataUtils.getNumberOfKeys(configuration);
                                 return new ChangeFeedWithMetaDataFlowController(ctx, feedLogManager, numOfKeys + 2,
-                                        (IRecordWithMetadataParser) dataParser, recordReader, true);
+                                        (IRecordWithMetadataParser) dataParser, recordReader, false);
                             } else {
                                 return new FeedWithMetaDataFlowController(ctx, feedLogManager, 2,
-                                        (IRecordWithMetadataParser) dataParser, recordReader, true);
+                                        (IRecordWithMetadataParser) dataParser, recordReader, false);
                             }
                         } else if (isChangeFeed) {
                             int numOfKeys = ExternalDataUtils.getNumberOfKeys(configuration);
                             return new ChangeFeedDataFlowController(ctx, feedLogManager, numOfKeys + 1,
-                                    (IRecordWithPKDataParser) dataParser, recordReader, true);
+                                    (IRecordWithPKDataParser) dataParser, recordReader, false);
                         } else {
-                            return new FeedRecordDataFlowController(ctx, feedLogManager, 1, dataParser, recordReader, false);
+                            return new FeedRecordDataFlowController(ctx, feedLogManager, 1, dataParser, recordReader,
+                                    isOrderIndependent);
                         }
                     } else {
                         return new RecordDataFlowController(ctx, dataParser, recordReader, 1);

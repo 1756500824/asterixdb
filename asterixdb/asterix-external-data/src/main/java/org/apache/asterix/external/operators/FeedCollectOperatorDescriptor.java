@@ -21,14 +21,19 @@ package org.apache.asterix.external.operators;
 import java.util.Map;
 
 import org.apache.asterix.common.api.INcApplicationContext;
+import org.apache.asterix.common.dataflow.ICcApplicationContext;
+import org.apache.asterix.common.exceptions.AsterixException;
 import org.apache.asterix.external.api.*;
 import org.apache.asterix.external.feed.management.FeedConnectionId;
 import org.apache.asterix.external.parser.controller.ChangeFeedParserController;
 import org.apache.asterix.external.parser.controller.ChangeFeedWithMetaParserController;
 import org.apache.asterix.external.parser.controller.FeedParserController;
 import org.apache.asterix.external.parser.controller.FeedWithMetaParserController;
+import org.apache.asterix.external.provider.DatasourceFactoryProvider;
 import org.apache.asterix.external.provider.ParserFactoryProvider;
 import org.apache.asterix.external.util.ExternalDataUtils;
+import org.apache.asterix.external.util.FeedLogManager;
+import org.apache.asterix.external.util.FeedUtils;
 import org.apache.asterix.external.util.FeedUtils.FeedRuntimeType;
 import org.apache.asterix.om.types.ARecordType;
 import org.apache.asterix.om.types.IAType;
@@ -39,6 +44,7 @@ import org.apache.hyracks.api.dataflow.IOperatorNodePushable;
 import org.apache.hyracks.api.dataflow.value.IRecordDescriptorProvider;
 import org.apache.hyracks.api.dataflow.value.RecordDescriptor;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
+import org.apache.hyracks.api.io.FileSplit;
 import org.apache.hyracks.api.job.JobSpecification;
 import org.apache.hyracks.dataflow.std.base.AbstractSingleActivityOperatorDescriptor;
 
@@ -73,7 +79,7 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
     private ARecordType metaType;
 
     public FeedCollectOperatorDescriptor(JobSpecification spec, FeedConnectionId feedConnectionId, ARecordType atype,
-                                         RecordDescriptor rDesc, Map<String, String> feedPolicyProperties, FeedRuntimeType subscriptionLocation) {
+            RecordDescriptor rDesc, Map<String, String> feedPolicyProperties, FeedRuntimeType subscriptionLocation) {
         super(spec, 1, 1);
         this.outRecDescs[0] = rDesc;
         this.outputType = atype;
@@ -93,11 +99,23 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
             IDataParserFactory dataParserFactory =
                     ParserFactoryProvider.getDataParserFactory(appCtx.getLibraryManager(), configuration);
             dataParserFactory.setRecordType(recordType);
-            dataParserFactory.configure(configuration);
             dataParserFactory.setMetaType(metaType);
+            dataParserFactory.configure(configuration);
             IRecordDataParserFactory<?> recordParserFactory = (IRecordDataParserFactory<?>) dataParserFactory;
             IRecordDataParser<?> dataParser = recordParserFactory.createRecordParser(ctx);
             FeedParserController feedParserController;
+            IExternalDataSourceFactory dataSourceFactory =
+                    DatasourceFactoryProvider.getExternalDataSourceFactory(appCtx.getLibraryManager(), configuration);
+            // TODO deal with the special case as follow
+//            if (dataSourceFactory.isIndexible() && (files != null)) {
+//                ((IIndexibleExternalDataSource) dataSourceFactory).setSnapshot(files, indexingOp);
+//            }
+            dataSourceFactory.configure(serviceCtx, configuration);
+            FileSplit[] feedLogFileSplits = FeedUtils.splitsForAdapter((ICcApplicationContext) appCtx,
+                    ExternalDataUtils.getDataverse(configuration), ExternalDataUtils.getFeedName(configuration),
+                    dataSourceFactory.getPartitionConstraint());
+            FeedLogManager feedLogManager = FeedUtils.getFeedLogManager(ctx, partition, feedLogFileSplits);
+            feedLogManager.touch();
             boolean isChangeFeed = ExternalDataUtils.isChangeFeed(configuration);
             boolean isRecordWithMeta = ExternalDataUtils.isRecordWithMeta(configuration);
             if (isRecordWithMeta) {
@@ -113,11 +131,12 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
                 feedParserController = new FeedParserController(dataParser);
             }
             if (isChangeFeed || isRecordWithMeta) {
-                feedCollect = new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition, true);
+                feedCollect = new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition,
+                        true, feedLogManager, feedParserController);
             } else {
-                feedCollect = new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition, false);
+                feedCollect = new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition,
+                        false, feedLogManager, feedParserController);
             }
-            feedCollect.setFeedParserController(feedParserController);
         } catch (AlgebricksException e) {
             e.printStackTrace();
             // TODO deal with the exception
@@ -156,6 +175,5 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
     public void setMetaType(ARecordType metaType) {
         this.metaType = metaType;
     }
-
 
 }
