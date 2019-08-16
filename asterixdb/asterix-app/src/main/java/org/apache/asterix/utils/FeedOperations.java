@@ -259,7 +259,7 @@ public class FeedOperations {
         boolean isChangeFeed = ExternalDataUtils.isChangeFeed(configuration);
         boolean isRecordWithMeta = ExternalDataUtils.isRecordWithMeta(configuration);
         boolean isFeed = ExternalDataUtils.isFeed(configuration);
-        boolean isOrderIndependent = ExternalDataUtils.isOrderIndependent(configuration);
+        boolean isOrderIndependent = ExternalDataUtils.isOrderIndependent(configuration) || true;
 
         boolean canParallel = !isChangeFeed && !isRecordWithMeta && isFeed && isOrderIndependent;
 
@@ -379,15 +379,15 @@ public class FeedOperations {
                         MToNPartitioningConnectorDescriptor conn =
                                 new MToNPartitioningConnectorDescriptor(jobSpec, tpcf);
                         jobSpec.connect(conn, replicateOp, iter1, leftOpDesc, leftOp.getRight());
-                        FeedCollectOperatorDescriptor feedCollect = (FeedCollectOperatorDescriptor) leftOpDesc;
-                        feedCollect.setConfiguration(feed.getConfiguration());
-                        feedCollect.setRecordType(ingestionOp.getAdapterOutputType());
-                        feedCollect.setMetaType(FeedMetadataUtil.getOutputType(feed,
-                                feed.getConfiguration().get(ExternalDataConstants.KEY_META_TYPE_NAME)));
                     } else {
                         jobSpec.connect(new OneToOneConnectorDescriptor(jobSpec), replicateOp, iter1, leftOpDesc,
                                 leftOp.getRight());
                     }
+                    FeedCollectOperatorDescriptor feedCollect = (FeedCollectOperatorDescriptor) leftOpDesc;
+                    feedCollect.setConfiguration(configuration);
+                    feedCollect.setRecordType(ingestionOp.getAdapterOutputType());
+                    feedCollect.setMetaType(FeedMetadataUtil.getOutputType(feed,
+                            configuration.get(ExternalDataConstants.KEY_META_TYPE_NAME)));
                 }
                 jobSpec.connect(connDesc, leftOpDesc, leftOp.getRight(), rightOpDesc, rightOp.getRight());
             }

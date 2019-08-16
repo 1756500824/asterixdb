@@ -18,7 +18,6 @@
  */
 package org.apache.asterix.external.dataflow;
 
-import org.apache.asterix.external.api.IForwarder;
 import org.apache.asterix.external.util.DataflowUtils;
 import org.apache.hyracks.api.comm.IFrame;
 import org.apache.hyracks.api.comm.IFrameWriter;
@@ -28,7 +27,7 @@ import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.dataflow.common.comm.io.ArrayTupleBuilder;
 import org.apache.hyracks.dataflow.common.comm.io.FrameTupleAppender;
 
-public class TupleForwarder implements IForwarder {
+public class TupleForwarder {
 
     private final FrameTupleAppender appender;
     private final IFrame frame;

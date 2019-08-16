@@ -304,8 +304,8 @@ public class ExternalDataUtils {
     }
 
     public static boolean isOrderIndependent(Map<String, String> configuration) {
-        return configuration.containsKey(ExternalDataConstants.KEY_IS_ORDER_INDEPENDENT) &&
-                Boolean.parseBoolean(configuration.get(ExternalDataConstants.KEY_IS_ORDER_INDEPENDENT));
+        return configuration.containsKey(ExternalDataConstants.KEY_IS_ORDER_INDEPENDENT)
+                && Boolean.parseBoolean(configuration.get(ExternalDataConstants.KEY_IS_ORDER_INDEPENDENT));
     }
 
     public static int getNumberOfKeys(Map<String, String> configuration) throws AsterixException {

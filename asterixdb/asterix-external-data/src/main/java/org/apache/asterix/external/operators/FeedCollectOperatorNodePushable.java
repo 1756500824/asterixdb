@@ -68,8 +68,8 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
     private ArrayTupleBuilder tb = new ArrayTupleBuilder(1);
 
     public FeedCollectOperatorNodePushable(IHyracksTaskContext ctx, FeedConnectionId feedConnectionId,
-           Map<String, String> feedPolicy, int partition, boolean canParallel, FeedLogManager feedLogManager,
-           FeedParserController feedParserController) {
+            Map<String, String> feedPolicy, int partition, boolean canParallel, FeedLogManager feedLogManager,
+            FeedParserController feedParserController) {
         this.ctx = ctx;
         this.partition = partition;
         this.connectionId = feedConnectionId;

@@ -91,11 +91,11 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
                 tb.reset();
                 incomingRecordsCount++;
                 if (canParallel) {
-                    if (!parseAndForward(record)) {
+                    if (!forward(record)) {
                         failedRecordsCount++;
                     }
                 } else {
-                    if (!forward(record)) {
+                    if (!parseAndForward(record)) {
                         failedRecordsCount++;
                     }
                 }

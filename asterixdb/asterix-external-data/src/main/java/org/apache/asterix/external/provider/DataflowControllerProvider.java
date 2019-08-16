@@ -75,7 +75,7 @@ public class DataflowControllerProvider {
                     } else if (isFeed) {
                         boolean isChangeFeed = ExternalDataUtils.isChangeFeed(configuration);
                         boolean isRecordWithMeta = ExternalDataUtils.isRecordWithMeta(configuration);
-                        boolean isOrderIndependent = ExternalDataUtils.isOrderIndependent(configuration);
+                        boolean isOrderIndependent = ExternalDataUtils.isOrderIndependent(configuration) || true;
                         if (isRecordWithMeta) {
                             if (isChangeFeed) {
                                 int numOfKeys = ExternalDataUtils.getNumberOfKeys(configuration);

@@ -22,7 +22,6 @@ import java.util.Map;
 
 import org.apache.asterix.common.api.INcApplicationContext;
 import org.apache.asterix.common.dataflow.ICcApplicationContext;
-import org.apache.asterix.common.exceptions.AsterixException;
 import org.apache.asterix.external.api.*;
 import org.apache.asterix.external.feed.management.FeedConnectionId;
 import org.apache.asterix.external.parser.controller.ChangeFeedParserController;
@@ -104,18 +103,19 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
             IRecordDataParserFactory<?> recordParserFactory = (IRecordDataParserFactory<?>) dataParserFactory;
             IRecordDataParser<?> dataParser = recordParserFactory.createRecordParser(ctx);
             FeedParserController feedParserController;
-            IExternalDataSourceFactory dataSourceFactory =
-                    DatasourceFactoryProvider.getExternalDataSourceFactory(appCtx.getLibraryManager(), configuration);
-            // TODO deal with the special case as follow
-//            if (dataSourceFactory.isIndexible() && (files != null)) {
-//                ((IIndexibleExternalDataSource) dataSourceFactory).setSnapshot(files, indexingOp);
-//            }
-            dataSourceFactory.configure(serviceCtx, configuration);
-            FileSplit[] feedLogFileSplits = FeedUtils.splitsForAdapter((ICcApplicationContext) appCtx,
-                    ExternalDataUtils.getDataverse(configuration), ExternalDataUtils.getFeedName(configuration),
-                    dataSourceFactory.getPartitionConstraint());
-            FeedLogManager feedLogManager = FeedUtils.getFeedLogManager(ctx, partition, feedLogFileSplits);
-            feedLogManager.touch();
+//            IExternalDataSourceFactory dataSourceFactory =
+//                    DatasourceFactoryProvider.getExternalDataSourceFactory(appCtx.getLibraryManager(), configuration);
+//            // TODO deal with the special case as follow
+//            //            if (dataSourceFactory.isIndexible() && (files != null)) {
+//            //                ((IIndexibleExternalDataSource) dataSourceFactory).setSnapshot(files, indexingOp);
+//            //            }
+//            dataSourceFactory.configure(serviceCtx, configuration);
+//            FileSplit[] feedLogFileSplits = FeedUtils.splitsForAdapter((ICcApplicationContext) appCtx,
+//                    ExternalDataUtils.getDataverse(configuration), ExternalDataUtils.getFeedName(configuration),
+//                    dataSourceFactory.getPartitionConstraint());
+//            FeedLogManager feedLogManager = FeedUtils.getFeedLogManager(ctx, partition, feedLogFileSplits);
+//            feedLogManager.touch();
+            FeedLogManager feedLogManager = null;
             boolean isChangeFeed = ExternalDataUtils.isChangeFeed(configuration);
             boolean isRecordWithMeta = ExternalDataUtils.isRecordWithMeta(configuration);
             if (isRecordWithMeta) {
@@ -132,10 +132,10 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
             }
             if (isChangeFeed || isRecordWithMeta) {
                 feedCollect = new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition,
-                        true, feedLogManager, feedParserController);
+                        false, feedLogManager, feedParserController);
             } else {
                 feedCollect = new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition,
-                        false, feedLogManager, feedParserController);
+                        true, feedLogManager, feedParserController);
             }
         } catch (AlgebricksException e) {
             e.printStackTrace();
