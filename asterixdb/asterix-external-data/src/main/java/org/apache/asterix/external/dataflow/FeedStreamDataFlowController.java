@@ -20,6 +20,7 @@ package org.apache.asterix.external.dataflow;
 
 import java.util.Map;
 
+import org.apache.asterix.external.api.AsterixInputStream;
 import org.apache.asterix.external.api.IRawRecord;
 import org.apache.asterix.external.api.IRecordReader;
 import org.apache.asterix.external.api.IStreamDataParser;
@@ -32,45 +33,43 @@ public class FeedStreamDataFlowController extends AbstractFeedDataFlowController
 
     private final IStreamDataParser dataParser;
     private final IRecordReader recordReader;
-    //    private final AsterixInputStream stream;
+    private final AsterixInputStream stream;
+    private final boolean canParallel;
     protected long incomingRecordsCount = 0;
 
-    public FeedStreamDataFlowController(IHyracksTaskContext ctx, FeedLogManager feedLogManager,
-            IStreamDataParser dataParser, IRecordReader recordReader, Map<String, String> configuration) {
+    public FeedStreamDataFlowController(IHyracksTaskContext ctx, FeedLogManager feedLogManager, IStreamDataParser
+            dataParser, IRecordReader recordReader, AsterixInputStream stream, boolean canParallel) {
         super(ctx, feedLogManager, 1);
         this.dataParser = dataParser;
         this.recordReader = recordReader;
-        //        recordReader = new SemiStructuredRecordReader();
-        //        try {
-        //            recordReader.configure(inputStream, configuration);
-        //        } catch (HyracksDataException e) {
-        //            e.printStackTrace();
-        //            // TODO deal with the exception
-        //        }
-        //        recordReader.setController(this);
+        this.stream = stream;
+        this.canParallel = canParallel;
     }
 
     @Override
     public void start(IFrameWriter writer) throws HyracksDataException {
         try {
             tupleForwarder = new TupleForwarder(ctx, writer);
-            //            while (true) {
-            //                if (!parseNext()) {
-            //                    break;
-            //                }
-            //                tb.addFieldEndOffset();
-            //                tupleForwarder.addTuple(tb);
-            //                incomingRecordsCount++;
-            //            }
-            IRawRecord record;
-            while (recordReader.hasNext()) {
-                record = recordReader.next();
-                tb.reset();
-                tb.addField(record.getBytes(), 0, record.size());
-                tupleForwarder.addTuple(tb);
-                incomingRecordsCount++;
+            if (canParallel) {
+                IRawRecord record;
+                while (recordReader.hasNext()) {
+                    record = recordReader.next();
+                    tb.reset();
+                    tb.addField(record.getBytes(), 0, record.size());
+                    tupleForwarder.addTuple(tb);
+                    incomingRecordsCount++;
+                }
+                tupleForwarder.complete();
+            } else {
+                while (true) {
+                    if (!parseNext()) {
+                        break;
+                    }
+                    tb.addFieldEndOffset();
+                    tupleForwarder.addTuple(tb);
+                    incomingRecordsCount++;
+                }
             }
-            tupleForwarder.complete();
         } catch (Throwable e) {
             throw HyracksDataException.create(e);
         }
@@ -81,10 +80,15 @@ public class FeedStreamDataFlowController extends AbstractFeedDataFlowController
             try {
                 tb.reset();
                 return dataParser.parse(tb.getDataOutput());
-                //                return true;
             } catch (Exception e) {
-                if (!handleException(e)) {
-                    throw e;
+                if (canParallel) {
+                    if (recordReader.handleException(e)) {
+                        throw e;
+                    }
+                } else {
+                    if (!handleException(e)) {
+                        throw e;
+                    }
                 }
             }
         }
@@ -93,14 +97,17 @@ public class FeedStreamDataFlowController extends AbstractFeedDataFlowController
     @Override
     public boolean stop(long timeout) throws HyracksDataException {
         try {
-            //            if (stream.stop()) {
-            //                return true;
-            //            }
-            //            stream.close();
-            if (recordReader.stop()) {
-                return true;
+            if (canParallel) {
+                if (recordReader.stop()) {
+                    return true;
+                }
+                recordReader.close();
+            } else {
+                if (stream.stop()) {
+                    return true;
+                }
+                stream.close();
             }
-            recordReader.close();
         } catch (Exception e) {
             throw HyracksDataException.create(e);
         }
@@ -110,11 +117,9 @@ public class FeedStreamDataFlowController extends AbstractFeedDataFlowController
     private boolean handleException(Throwable th) {
         boolean handled = true;
         try {
-            //            handled &= stream.handleException(th);
-            handled &= recordReader.handleException(th);
+            handled &= stream.handleException(th);
             if (handled) {
-                //                handled &= dataParser.reset(stream);
-                //                handled &= recordReader.
+                handled &= dataParser.reset(stream);
             }
         } catch (Exception e) {
             th.addSuppressed(e);

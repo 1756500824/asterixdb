@@ -259,7 +259,7 @@ public class FeedOperations {
         boolean isChangeFeed = ExternalDataUtils.isChangeFeed(configuration);
         boolean isRecordWithMeta = ExternalDataUtils.isRecordWithMeta(configuration);
         boolean isFeed = ExternalDataUtils.isFeed(configuration);
-        boolean isOrderIndependent = ExternalDataUtils.isOrderIndependent(configuration) || true;
+        boolean isOrderIndependent = ExternalDataUtils.isOrderIndependent(configuration);
 
         boolean canParallel = !isChangeFeed && !isRecordWithMeta && isFeed && isOrderIndependent;
 
@@ -374,20 +374,20 @@ public class FeedOperations {
                 IOperatorDescriptor leftOpDesc = jobSpec.getOperatorMap().get(leftOp.getLeft().getOperatorId());
                 IOperatorDescriptor rightOpDesc = jobSpec.getOperatorMap().get(rightOp.getLeft().getOperatorId());
                 if (leftOp.getLeft() instanceof FeedCollectOperatorDescriptor) {
+                    FeedCollectOperatorDescriptor feedCollect = (FeedCollectOperatorDescriptor) leftOpDesc;
+                    feedCollect.setConfiguration(configuration);
                     if (canParallel) {
                         ITuplePartitionComputerFactory tpcf = new RandomPartitionComputerFactory();
                         MToNPartitioningConnectorDescriptor conn =
                                 new MToNPartitioningConnectorDescriptor(jobSpec, tpcf);
                         jobSpec.connect(conn, replicateOp, iter1, leftOpDesc, leftOp.getRight());
+                        feedCollect.setRecordType(ingestionOp.getAdapterOutputType());
+                        feedCollect.setMetaType(FeedMetadataUtil.getOutputType(feed,
+                                configuration.get(ExternalDataConstants.KEY_META_TYPE_NAME)));
                     } else {
                         jobSpec.connect(new OneToOneConnectorDescriptor(jobSpec), replicateOp, iter1, leftOpDesc,
                                 leftOp.getRight());
                     }
-                    FeedCollectOperatorDescriptor feedCollect = (FeedCollectOperatorDescriptor) leftOpDesc;
-                    feedCollect.setConfiguration(configuration);
-                    feedCollect.setRecordType(ingestionOp.getAdapterOutputType());
-                    feedCollect.setMetaType(FeedMetadataUtil.getOutputType(feed,
-                            configuration.get(ExternalDataConstants.KEY_META_TYPE_NAME)));
                 }
                 jobSpec.connect(connDesc, leftOpDesc, leftOp.getRight(), rightOpDesc, rightOp.getRight());
             }

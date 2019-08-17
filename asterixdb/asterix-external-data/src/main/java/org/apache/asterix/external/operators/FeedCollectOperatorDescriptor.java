@@ -91,57 +91,37 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
     public IOperatorNodePushable createPushRuntime(IHyracksTaskContext ctx,
             IRecordDescriptorProvider recordDescProvider, final int partition, int nPartitions)
             throws HyracksDataException {
-        FeedCollectOperatorNodePushable feedCollect = null;
-        INCServiceContext serviceCtx = ctx.getJobletContext().getServiceContext();
-        INcApplicationContext appCtx = (INcApplicationContext) serviceCtx.getApplicationContext();
-        try {
-            IDataParserFactory dataParserFactory =
-                    ParserFactoryProvider.getDataParserFactory(appCtx.getLibraryManager(), configuration);
-            dataParserFactory.setRecordType(recordType);
-            dataParserFactory.setMetaType(metaType);
-            dataParserFactory.configure(configuration);
-            IRecordDataParserFactory<?> recordParserFactory = (IRecordDataParserFactory<?>) dataParserFactory;
-            IRecordDataParser<?> dataParser = recordParserFactory.createRecordParser(ctx);
-            FeedParserController feedParserController;
-//            IExternalDataSourceFactory dataSourceFactory =
-//                    DatasourceFactoryProvider.getExternalDataSourceFactory(appCtx.getLibraryManager(), configuration);
-//            // TODO deal with the special case as follow
-//            //            if (dataSourceFactory.isIndexible() && (files != null)) {
-//            //                ((IIndexibleExternalDataSource) dataSourceFactory).setSnapshot(files, indexingOp);
-//            //            }
-//            dataSourceFactory.configure(serviceCtx, configuration);
-//            FileSplit[] feedLogFileSplits = FeedUtils.splitsForAdapter((ICcApplicationContext) appCtx,
-//                    ExternalDataUtils.getDataverse(configuration), ExternalDataUtils.getFeedName(configuration),
-//                    dataSourceFactory.getPartitionConstraint());
-//            FeedLogManager feedLogManager = FeedUtils.getFeedLogManager(ctx, partition, feedLogFileSplits);
-//            feedLogManager.touch();
-            FeedLogManager feedLogManager = null;
-            boolean isChangeFeed = ExternalDataUtils.isChangeFeed(configuration);
-            boolean isRecordWithMeta = ExternalDataUtils.isRecordWithMeta(configuration);
-            if (isRecordWithMeta) {
-                if (isChangeFeed) {
-                    feedParserController =
-                            new ChangeFeedWithMetaParserController((IRecordWithMetadataParser) dataParser);
-                } else {
-                    feedParserController = new FeedWithMetaParserController((IRecordWithMetadataParser) dataParser);
-                }
-            } else if (isChangeFeed) {
-                feedParserController = new ChangeFeedParserController((IRecordWithPKDataParser) dataParser);
-            } else {
-                feedParserController = new FeedParserController(dataParser);
-            }
-            if (isChangeFeed || isRecordWithMeta) {
+        boolean isChangeFeed = ExternalDataUtils.isChangeFeed(configuration);
+        boolean isRecordWithMeta = ExternalDataUtils.isRecordWithMeta(configuration);
+        boolean isOrderIndependent = ExternalDataUtils.isOrderIndependent(configuration);
+
+        boolean canParallel = !isChangeFeed && !isRecordWithMeta && isOrderIndependent;
+
+        if (canParallel) {
+            FeedCollectOperatorNodePushable feedCollect = null;
+            INCServiceContext serviceCtx = ctx.getJobletContext().getServiceContext();
+            INcApplicationContext appCtx = (INcApplicationContext) serviceCtx.getApplicationContext();
+            try {
+                IDataParserFactory dataParserFactory =
+                        ParserFactoryProvider.getDataParserFactory(appCtx.getLibraryManager(), configuration);
+                dataParserFactory.setRecordType(recordType);
+                dataParserFactory.setMetaType(metaType);
+                dataParserFactory.configure(configuration);
+                IRecordDataParserFactory<?> recordParserFactory = (IRecordDataParserFactory<?>) dataParserFactory;
+                IRecordDataParser<?> dataParser = recordParserFactory.createRecordParser(ctx);
                 feedCollect = new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition,
-                        false, feedLogManager, feedParserController);
-            } else {
-                feedCollect = new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition,
-                        true, feedLogManager, feedParserController);
+                            true);
+                feedCollect.setDataParser(dataParser);
+                // TODO add FeedLogManager to feedCollect
+            } catch (AlgebricksException e) {
+                e.printStackTrace();
+                // TODO deal with the exception
             }
-        } catch (AlgebricksException e) {
-            e.printStackTrace();
-            // TODO deal with the exception
+            return feedCollect;
+        } else {
+            return new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition,
+                    false);
         }
-        return feedCollect;
     }
 
     public FeedConnectionId getFeedConnectionId() {

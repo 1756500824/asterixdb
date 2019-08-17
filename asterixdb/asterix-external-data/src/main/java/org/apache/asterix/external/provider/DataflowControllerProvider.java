@@ -63,6 +63,7 @@ public class DataflowControllerProvider {
             Map<String, String> configuration, boolean indexingOp, boolean isFeed, FeedLogManager feedLogManager)
             throws HyracksDataException {
         try {
+            boolean isOrderIndependent = ExternalDataUtils.isOrderIndependent(configuration);
             switch (dataSourceFactory.getDataSourceType()) {
                 case RECORDS:
                     IRecordReaderFactory<?> recordReaderFactory = (IRecordReaderFactory<?>) dataSourceFactory;
@@ -75,7 +76,6 @@ public class DataflowControllerProvider {
                     } else if (isFeed) {
                         boolean isChangeFeed = ExternalDataUtils.isChangeFeed(configuration);
                         boolean isRecordWithMeta = ExternalDataUtils.isRecordWithMeta(configuration);
-                        boolean isOrderIndependent = ExternalDataUtils.isOrderIndependent(configuration) || true;
                         if (isRecordWithMeta) {
                             if (isChangeFeed) {
                                 int numOfKeys = ExternalDataUtils.getNumberOfKeys(configuration);
@@ -101,16 +101,19 @@ public class DataflowControllerProvider {
                     AsterixInputStream stream = streamFactory.createInputStream(ctx, partition);
                     IStreamDataParserFactory streamParserFactory = (IStreamDataParserFactory) dataParserFactory;
                     IStreamDataParser streamParser = streamParserFactory.createInputStreamParser(ctx, partition);
-                    //                    streamParser.setInputStream(stream);
-
-                    StreamRecordReaderFactory streamRecordReaderFactory = new StreamRecordReaderFactory();
-                    configuration.put(ExternalDataConstants.KEY_READER, streamFactory.toString().split("@")[0]);
-                    streamRecordReaderFactory.configure(ctx.getJobletContext().getServiceContext(), configuration);
-                    IRecordReader<?> streamRecordReader = streamRecordReaderFactory.createRecordReader(ctx, partition);
+                    IRecordReader<?> streamRecordReader = null;
+                    if (isOrderIndependent) {
+                        StreamRecordReaderFactory streamRecordReaderFactory = new StreamRecordReaderFactory();
+                        configuration.put(ExternalDataConstants.KEY_READER, streamFactory.toString().split("@")[0]);
+                        streamRecordReaderFactory.configure(ctx.getJobletContext().getServiceContext(), configuration);
+                        streamRecordReader = streamRecordReaderFactory.createRecordReader(ctx, partition);
+                    } else {
+                        streamParser.setInputStream(stream);
+                    }
 
                     if (isFeed) {
                         return new FeedStreamDataFlowController(ctx, feedLogManager, streamParser, streamRecordReader,
-                                configuration);
+                                stream, isOrderIndependent);
                     } else {
                         return new StreamDataFlowController(ctx, streamParser);
                     }
