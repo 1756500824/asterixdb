@@ -42,7 +42,7 @@ public class NCServiceConfig {
     public String address = null;
 
     @Option(name = "-port", required = false, usage = "Port to listen on for connections from CC (default: 9090)")
-    public int port = 9090;
+    public int port = 9090; //9090
 
     @Option(name = "-logdir", required = false, usage = "Directory to log NC output ('-' for stdout of NC service; default: $app.home/logs)")
     public String logdir = null;

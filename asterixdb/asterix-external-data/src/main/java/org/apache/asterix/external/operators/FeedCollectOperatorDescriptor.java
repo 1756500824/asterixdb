@@ -21,18 +21,10 @@ package org.apache.asterix.external.operators;
 import java.util.Map;
 
 import org.apache.asterix.common.api.INcApplicationContext;
-import org.apache.asterix.common.dataflow.ICcApplicationContext;
 import org.apache.asterix.external.api.*;
 import org.apache.asterix.external.feed.management.FeedConnectionId;
-import org.apache.asterix.external.parser.controller.ChangeFeedParserController;
-import org.apache.asterix.external.parser.controller.ChangeFeedWithMetaParserController;
-import org.apache.asterix.external.parser.controller.FeedParserController;
-import org.apache.asterix.external.parser.controller.FeedWithMetaParserController;
-import org.apache.asterix.external.provider.DatasourceFactoryProvider;
 import org.apache.asterix.external.provider.ParserFactoryProvider;
 import org.apache.asterix.external.util.ExternalDataUtils;
-import org.apache.asterix.external.util.FeedLogManager;
-import org.apache.asterix.external.util.FeedUtils;
 import org.apache.asterix.external.util.FeedUtils.FeedRuntimeType;
 import org.apache.asterix.om.types.ARecordType;
 import org.apache.asterix.om.types.IAType;
@@ -43,7 +35,6 @@ import org.apache.hyracks.api.dataflow.IOperatorNodePushable;
 import org.apache.hyracks.api.dataflow.value.IRecordDescriptorProvider;
 import org.apache.hyracks.api.dataflow.value.RecordDescriptor;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
-import org.apache.hyracks.api.io.FileSplit;
 import org.apache.hyracks.api.job.JobSpecification;
 import org.apache.hyracks.dataflow.std.base.AbstractSingleActivityOperatorDescriptor;
 
@@ -109,8 +100,8 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
                 dataParserFactory.configure(configuration);
                 IRecordDataParserFactory<?> recordParserFactory = (IRecordDataParserFactory<?>) dataParserFactory;
                 IRecordDataParser<?> dataParser = recordParserFactory.createRecordParser(ctx);
-                feedCollect = new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition,
-                            true);
+                feedCollect =
+                        new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition, true);
                 feedCollect.setDataParser(dataParser);
                 // TODO add FeedLogManager to feedCollect
             } catch (AlgebricksException e) {
@@ -119,8 +110,7 @@ public class FeedCollectOperatorDescriptor extends AbstractSingleActivityOperato
             }
             return feedCollect;
         } else {
-            return new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition,
-                    false);
+            return new FeedCollectOperatorNodePushable(ctx, connectionId, feedPolicyProperties, partition, false);
         }
     }
 

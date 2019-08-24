@@ -68,7 +68,7 @@ public class ParserPerformanceTest {
         CharBuffer chars = CharBuffer.allocate(ExternalDataConstants.DEFAULT_BUFFER_SIZE);
         CharArrayRecord record = new CharArrayRecord();
         set(json, decoder, chars, record);
-        ADMDataParser parser = new ADMDataParser(DefaultOpenFieldType.NESTED_OPEN_RECORD_TYPE, false);
+        ADMDataParser parser = new ADMDataParser(DefaultOpenFieldType.NESTED_OPEN_RECORD_TYPE);
         ArrayBackedValueStorage output = new ArrayBackedValueStorage();
         start = System.nanoTime();
         for (int i = 0; i < round; i++) {

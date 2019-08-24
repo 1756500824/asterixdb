@@ -77,16 +77,14 @@ public class ADMDataParser extends AbstractDataParser implements IStreamDataPars
     private final String mismatchErrorMessage = "Mismatch Type, expecting a value of type ";
     private final String mismatchErrorMessage2 = " got a value of type ";
 
-    public ADMDataParser(ARecordType recordType, boolean isStream) {
-        this(null, recordType, isStream);
+    public ADMDataParser(ARecordType recordType) {
+        this(null, recordType);
     }
 
-    public ADMDataParser(String filename, ARecordType recordType, boolean isStream) {
+    public ADMDataParser(String filename, ARecordType recordType) {
         this.filename = filename;
         this.recordType = recordType;
-        //        if (!isStream) {
         this.admLexer = new AdmLexer();
-        //        }
     }
 
     @Override

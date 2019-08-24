@@ -95,7 +95,7 @@ public class RecordWithMetaTest {
             CSVToRecordWithMetadataAndPKConverter recordConverter = new CSVToRecordWithMetadataAndPKConverter(
                     valueIndex, delimiter, metaType, recordType, pkIndicators, pkIndexes, keyTypes);
             // create the value parser <ADM in this case>
-            ADMDataParser valueParser = new ADMDataParser(recordType, false);
+            ADMDataParser valueParser = new ADMDataParser(recordType);
             // create parser.
             RecordWithMetadataParser parser = new RecordWithMetadataParser(metaType, valueParser, recordConverter);
 

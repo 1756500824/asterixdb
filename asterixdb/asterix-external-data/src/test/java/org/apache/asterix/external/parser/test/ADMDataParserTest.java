@@ -97,7 +97,7 @@ public class ADMDataParserTest {
         AtomicInteger errorCount = new AtomicInteger(0);
         for (int i = 0; i < threads.length; ++i) {
             threads[i] = new Thread(new Runnable() {
-                ADMDataParser parser = new ADMDataParser(null, true);
+                ADMDataParser parser = new ADMDataParser(null);
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 DataOutput dos = new DataOutputStream(bos);
 
@@ -165,7 +165,7 @@ public class ADMDataParserTest {
 
             String wktObject = "{\"id\": 123, \"coord\": \"POINT(3 4)\"}";
             InputStream in = new ByteArrayInputStream(wktObject.getBytes());
-            ADMDataParser parser = new ADMDataParser(recordType, true);
+            ADMDataParser parser = new ADMDataParser(recordType);
             parser.setInputStream(in);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(baos);

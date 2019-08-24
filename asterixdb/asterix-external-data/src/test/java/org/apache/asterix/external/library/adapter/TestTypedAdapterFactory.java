@@ -81,7 +81,7 @@ public class TestTypedAdapterFactory implements IAdapterFactory {
                 IApplicationContext appCtx =
                         (IApplicationContext) ctx.getJobletContext().getServiceContext().getApplicationContext();
                 ClusterPartition nodePartition = appCtx.getMetadataProperties().getNodePartitions().get(nodeId)[0];
-                parser = new ADMDataParser(outputType, true);
+                parser = new ADMDataParser(outputType);
                 tb = new ArrayTupleBuilder(1);
                 return new ITupleParser() {
                     @Override

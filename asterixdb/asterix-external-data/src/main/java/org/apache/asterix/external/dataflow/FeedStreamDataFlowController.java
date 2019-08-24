@@ -18,8 +18,6 @@
  */
 package org.apache.asterix.external.dataflow;
 
-import java.util.Map;
-
 import org.apache.asterix.external.api.AsterixInputStream;
 import org.apache.asterix.external.api.IRawRecord;
 import org.apache.asterix.external.api.IRecordReader;
@@ -37,8 +35,8 @@ public class FeedStreamDataFlowController extends AbstractFeedDataFlowController
     private final boolean canParallel;
     protected long incomingRecordsCount = 0;
 
-    public FeedStreamDataFlowController(IHyracksTaskContext ctx, FeedLogManager feedLogManager, IStreamDataParser
-            dataParser, IRecordReader recordReader, AsterixInputStream stream, boolean canParallel) {
+    public FeedStreamDataFlowController(IHyracksTaskContext ctx, FeedLogManager feedLogManager,
+            IStreamDataParser dataParser, IRecordReader recordReader, AsterixInputStream stream, boolean canParallel) {
         super(ctx, feedLogManager, 1);
         this.dataParser = dataParser;
         this.recordReader = recordReader;

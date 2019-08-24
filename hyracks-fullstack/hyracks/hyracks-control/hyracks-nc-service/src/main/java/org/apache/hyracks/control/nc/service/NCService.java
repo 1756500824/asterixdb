@@ -290,6 +290,7 @@ public class NCService {
         // the NC itself so that Managix can continue to function.
         InetAddress addr = config.address == null ? null : InetAddress.getByName(config.address);
         int port = config.port;
+        // LOGGER.info("address: " + addr.toString() + " port: " + port);
 
         // Loop forever - the NCService will always return to "waiting for CC" state
         // when the child NC terminates for any reason.

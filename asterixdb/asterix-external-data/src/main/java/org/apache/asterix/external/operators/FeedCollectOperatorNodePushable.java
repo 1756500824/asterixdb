@@ -31,10 +31,8 @@ import org.apache.asterix.external.feed.dataflow.SyncFeedRuntimeInputHandler;
 import org.apache.asterix.external.feed.management.FeedConnectionId;
 import org.apache.asterix.external.feed.policy.FeedPolicyAccessor;
 import org.apache.asterix.external.input.record.CharArrayRecord;
-import org.apache.asterix.external.parser.controller.FeedParserController;
 import org.apache.asterix.external.util.DataflowUtils;
 import org.apache.asterix.external.util.ExternalDataConstants;
-import org.apache.asterix.external.util.FeedLogManager;
 import org.apache.asterix.external.util.FeedUtils.FeedRuntimeType;
 import org.apache.hyracks.api.comm.IFrame;
 import org.apache.hyracks.api.comm.VSizeFrame;
@@ -66,6 +64,7 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
     private IFrame frame;
     private FrameTupleAppender appender;
     private ArrayTupleBuilder tb = new ArrayTupleBuilder(1);
+    private int parseNum = 0;
 
     public FeedCollectOperatorNodePushable(IHyracksTaskContext ctx, FeedConnectionId feedConnectionId,
             Map<String, String> feedPolicy, int partition, boolean canParallel) {
@@ -123,6 +122,7 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
                     // TODO deal with the exception
                 }
             }
+//            System.out.printf("This parser parse %d records\n", parseNum);
             writer.nextFrame(appender.getBuffer());
         } else {
             writer.nextFrame(buffer);
@@ -147,9 +147,10 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
     private boolean parseAndForward(CharArrayRecord record) throws IOException {
         try {
             dataParser.parse(record, tb.getDataOutput());
+            parseNum++;
         } catch (Exception e) {
             LOGGER.log(Level.WARN, ExternalDataConstants.ERROR_PARSE_RECORD, e);
-//            feedLogManager.logRecord(record.toString(), ExternalDataConstants.ERROR_PARSE_RECORD);
+            //            feedLogManager.logRecord(record.toString(), ExternalDataConstants.ERROR_PARSE_RECORD);
             return false;
         }
         tb.addFieldEndOffset();

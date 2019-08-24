@@ -22,11 +22,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.asterix.external.api.IExternalDataSourceFactory.DataSourceType;
 import org.apache.asterix.external.api.IRecordDataParser;
 import org.apache.asterix.external.api.IStreamDataParser;
 import org.apache.asterix.external.parser.ADMDataParser;
-import org.apache.asterix.external.util.ExternalDataUtils;
 import org.apache.asterix.om.types.ARecordType;
 import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
@@ -43,8 +41,7 @@ public class ADMDataParserFactory extends AbstractRecordStreamParserFactory<char
     }
 
     private ADMDataParser createParser() {
-        return new ADMDataParser(recordType,
-                ExternalDataUtils.getDataSourceType(configuration).equals(DataSourceType.STREAM));
+        return new ADMDataParser(recordType);
     }
 
     @Override
