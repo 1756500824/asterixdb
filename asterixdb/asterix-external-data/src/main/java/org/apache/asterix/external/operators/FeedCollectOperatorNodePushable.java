@@ -122,7 +122,7 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
                     // TODO deal with the exception
                 }
             }
-//            System.out.printf("This parser parse %d records\n", parseNum);
+            //            System.out.printf("This parser parse %d records\n", parseNum);
             writer.nextFrame(appender.getBuffer());
         } else {
             writer.nextFrame(buffer);

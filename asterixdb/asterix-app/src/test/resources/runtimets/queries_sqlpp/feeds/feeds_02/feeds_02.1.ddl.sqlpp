@@ -44,5 +44,6 @@ create  feed TweetFeed with {
   "path" : "asterix_nc1://data/twitter/obamatweets.adm",
   "format": "adm",
   "type-name" : "TweetType",
-  "tuple-interval" : "10"
+  "tuple-interval" : "10",
+  "order-independent" : "true"
 };
