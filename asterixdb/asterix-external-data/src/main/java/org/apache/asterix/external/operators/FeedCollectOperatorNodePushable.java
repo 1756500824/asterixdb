@@ -122,8 +122,10 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
                     // TODO deal with the exception
                 }
             }
-//            System.out.println(ctx.getJobletContext().getServiceContext().getNodeId());
-//            System.out.printf("This parser parse %d records\n", parseNum);
+            //            System.out.println(ctx.getJobletContext().getServiceContext().getNodeId());
+            //            System.out.printf("This parser parse %d records\n", parseNum);
+            LOGGER.log(Level.DEBUG, "{ " + ctx.getJobletContext().getServiceContext().getNodeId() + " has parsed "
+                    + parseNum + " records }\n");
             writer.nextFrame(appender.getBuffer());
         } else {
             writer.nextFrame(buffer);

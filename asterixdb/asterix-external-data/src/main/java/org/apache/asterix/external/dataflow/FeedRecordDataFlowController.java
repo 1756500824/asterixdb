@@ -173,6 +173,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
     }
 
     private Throwable finish(Throwable failure) {
+        LOGGER.log(Level.DEBUG, getStats());
         Throwable th = CleanupUtils.close(recordReader, failure);
         if (th == null) {
             try {

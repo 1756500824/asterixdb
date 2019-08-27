@@ -147,8 +147,8 @@ public class AlgebricksMetaOperatorDescriptor extends AbstractSingleActivityOper
 
             @Override
             public void nextFrame(ByteBuffer buffer) throws HyracksDataException {
-//                System.out.println(ctx.getJobletContext().getServiceContext().getNodeId());
-//                System.out.println("In AlgebricksMeta assign");
+                //                System.out.println(ctx.getJobletContext().getServiceContext().getNodeId());
+                //                System.out.println("In AlgebricksMeta assign");
                 startOfPipeline.nextFrame(buffer);
             }
 
