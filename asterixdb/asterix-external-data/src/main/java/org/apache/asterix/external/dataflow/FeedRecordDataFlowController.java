@@ -90,6 +90,9 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
                 }
                 tb.reset();
                 incomingRecordsCount++;
+                if (incomingRecordsCount % 1000 == 0) {
+                    System.out.printf("------\nCurrent tuples: %d\n------\n", incomingRecordsCount);
+                }
                 if (canParallel) {
                     if (!forward(record)) {
                         failedRecordsCount++;
@@ -100,6 +103,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
                     }
                 }
             }
+            System.out.printf("------\nTotal tuples: %d\n------\n", incomingRecordsCount);
         } catch (HyracksDataException e) {
             LOGGER.log(Level.WARN, "Exception during ingestion", e);
             if (e.getComponent() == ErrorCode.ASTERIX
@@ -120,6 +124,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
             failure = e;
             LOGGER.log(Level.WARN, "Failure while operating a feed source", e);
         } finally {
+            LOGGER.log(Level.INFO, getStats());
             failure = finish(failure);
         }
         if (failure != null) {

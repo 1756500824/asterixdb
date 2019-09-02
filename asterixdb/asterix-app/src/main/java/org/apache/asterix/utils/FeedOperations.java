@@ -258,10 +258,10 @@ public class FeedOperations {
 
         boolean isChangeFeed = ExternalDataUtils.isChangeFeed(configuration);
         boolean isRecordWithMeta = ExternalDataUtils.isRecordWithMeta(configuration);
-        boolean isFeed = ExternalDataUtils.isFeed(configuration);
+        //        boolean isFeed = ExternalDataUtils.isFeed(configuration);
         boolean isOrderIndependent = ExternalDataUtils.isOrderIndependent(configuration);
 
-        boolean canParallel = !isChangeFeed && !isRecordWithMeta && isFeed && isOrderIndependent;
+        boolean canParallel = !isChangeFeed && !isRecordWithMeta && isOrderIndependent;
 
         // copy ingestor
         FeedIntakeOperatorDescriptor firstOp =

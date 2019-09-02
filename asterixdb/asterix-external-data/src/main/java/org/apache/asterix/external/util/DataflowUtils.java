@@ -24,22 +24,11 @@ import org.apache.hyracks.api.comm.IFrameWriter;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.dataflow.common.comm.io.ArrayTupleBuilder;
 import org.apache.hyracks.dataflow.common.comm.io.FrameTupleAppender;
-import org.apache.hyracks.dataflow.common.comm.io.FrameWholeTupleAppender;
 import org.apache.hyracks.dataflow.common.data.accessors.ITupleReference;
 
 public class DataflowUtils {
 
     private DataflowUtils() {
-    }
-
-    public static void addWholeTupleToFrame(FrameWholeTupleAppender appender, ArrayTupleBuilder tb, IFrameWriter writer)
-            throws HyracksDataException {
-        if (!appender.append(tb.getByteArray(), 0, tb.getSize())) {
-            appender.write(writer, true);
-            if (!appender.append(tb.getByteArray(), 0, tb.getSize())) {
-                throw new RuntimeDataException(ErrorCode.UTIL_DATAFLOW_UTILS_TUPLE_TOO_LARGE);
-            }
-        }
     }
 
     public static void addTupleToFrame(FrameTupleAppender appender, ArrayTupleBuilder tb, IFrameWriter writer)

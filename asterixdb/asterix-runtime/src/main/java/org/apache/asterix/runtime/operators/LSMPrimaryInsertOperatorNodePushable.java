@@ -77,6 +77,7 @@ public class LSMPrimaryInsertOperatorNodePushable extends LSMIndexInsertUpdateDe
     private boolean flushedPartialTuples;
     private int currentTupleIdx;
     private int lastFlushedTupleIdx;
+    //    private int failedTupleNum;
 
     private final PermutingFrameTupleReference keyTuple;
 
@@ -105,6 +106,7 @@ public class LSMPrimaryInsertOperatorNodePushable extends LSMIndexInsertUpdateDe
             }
         }
         keyTuple = new PermutingFrameTupleReference(searchKeyPermutations);
+        //        failedTupleNum = 0;
         processor = new IFrameTupleProcessor() {
             @Override
             public void process(ITupleReference tuple, int index) throws HyracksDataException {
@@ -140,6 +142,7 @@ public class LSMPrimaryInsertOperatorNodePushable extends LSMIndexInsertUpdateDe
                             HyracksDataException.create(ErrorCode.DUPLICATE_KEY), sourceLoc, index);
                 }
                 currentTupleIdx = index + 1;
+                //                System.out.println("\n------\ncurrent index: " + currentTupleIdx + "------");
             }
 
             @Override
@@ -150,6 +153,7 @@ public class LSMPrimaryInsertOperatorNodePushable extends LSMIndexInsertUpdateDe
             @Override
             public void finish() throws HyracksDataException {
                 lsmAccessor.getCtx().setOperation(IndexOperation.UPSERT);
+                //                System.out.println("------\ntotal index: " + currentTupleIdx + "\n------");
             }
 
             @Override

@@ -40,6 +40,9 @@ public class TupleForwarder {
     }
 
     public void addTuple(ArrayTupleBuilder tb) throws HyracksDataException {
+        if (tb.getFieldEndOffsets().length == 2 || tb.getSize() == 3870) {
+            System.out.println("------\nThis tuple is wrong\n------");
+        }
         DataflowUtils.addTupleToFrame(appender, tb, writer);
     }
 

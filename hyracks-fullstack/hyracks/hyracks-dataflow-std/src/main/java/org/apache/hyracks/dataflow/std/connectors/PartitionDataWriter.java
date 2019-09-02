@@ -18,6 +18,7 @@
  */
 package org.apache.hyracks.dataflow.std.connectors;
 
+import java.io.CharArrayReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -43,6 +44,7 @@ public class PartitionDataWriter implements IFrameWriter {
     private final IHyracksTaskContext ctx;
     private boolean[] allocatedFrames;
     private boolean failed = false;
+    private int[] num;
 
     public PartitionDataWriter(IHyracksTaskContext ctx, int consumerPartitionCount, IPartitionWriterFactory pwFactory,
             RecordDescriptor recordDescriptor, ITuplePartitionComputer tpc) throws HyracksDataException {
@@ -54,6 +56,7 @@ public class PartitionDataWriter implements IFrameWriter {
         allocatedFrames = new boolean[consumerPartitionCount];
         appenders = new FrameTupleAppender[consumerPartitionCount];
         tupleAccessor = new FrameTupleAccessor(recordDescriptor);
+        num = new int[consumerPartitionCount];
         initializeAppenders(pwFactory);
     }
 
@@ -124,13 +127,20 @@ public class PartitionDataWriter implements IFrameWriter {
     public void nextFrame(ByteBuffer buffer) throws HyracksDataException {
         tupleAccessor.reset(buffer);
         int tupleCount = tupleAccessor.getTupleCount();
+//        CharArrayRecord record =
         for (int i = 0; i < tupleCount; ++i) {
             int h = tpc.partition(tupleAccessor, i, consumerPartitionCount);
             if (!allocatedFrames[h]) {
                 allocateFrames(h);
             }
             FrameUtils.appendToWriter(pWriters[h], appenders[h], tupleAccessor, i);
+            num[h]++;
         }
+        System.out.println("------");
+        for (int i = 0; i < consumerPartitionCount; ++i) {
+            System.out.printf("partition %d: %d tuples // ", i, num[i]);
+        }
+        System.out.println("------");
     }
 
     protected void allocateFrames(int i) throws HyracksDataException {
