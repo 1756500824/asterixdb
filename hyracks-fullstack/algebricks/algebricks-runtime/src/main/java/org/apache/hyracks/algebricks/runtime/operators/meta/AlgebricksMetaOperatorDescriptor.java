@@ -162,9 +162,9 @@ public class AlgebricksMetaOperatorDescriptor extends AbstractSingleActivityOper
             @Override
             public void fail() throws HyracksDataException {
                 if (opened) {
+                }
+                startOfPipeline.fail();
             }
-                    startOfPipeline.fail();
-        }
 
             @Override
             public void flush() throws HyracksDataException {

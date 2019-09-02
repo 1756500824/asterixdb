@@ -18,7 +18,6 @@
  */
 package org.apache.hyracks.dataflow.std.connectors;
 
-import java.io.CharArrayReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -127,7 +126,7 @@ public class PartitionDataWriter implements IFrameWriter {
     public void nextFrame(ByteBuffer buffer) throws HyracksDataException {
         tupleAccessor.reset(buffer);
         int tupleCount = tupleAccessor.getTupleCount();
-//        CharArrayRecord record =
+        //        CharArrayRecord record =
         for (int i = 0; i < tupleCount; ++i) {
             int h = tpc.partition(tupleAccessor, i, consumerPartitionCount);
             if (!allocatedFrames[h]) {
