@@ -126,7 +126,6 @@ public class PartitionDataWriter implements IFrameWriter {
     public void nextFrame(ByteBuffer buffer) throws HyracksDataException {
         tupleAccessor.reset(buffer);
         int tupleCount = tupleAccessor.getTupleCount();
-        //        CharArrayRecord record =
         for (int i = 0; i < tupleCount; ++i) {
             int h = tpc.partition(tupleAccessor, i, consumerPartitionCount);
             if (!allocatedFrames[h]) {
@@ -135,11 +134,6 @@ public class PartitionDataWriter implements IFrameWriter {
             FrameUtils.appendToWriter(pWriters[h], appenders[h], tupleAccessor, i);
             num[h]++;
         }
-        System.out.println("------");
-        for (int i = 0; i < consumerPartitionCount; ++i) {
-            System.out.printf("partition %d: %d tuples // ", i, num[i]);
-        }
-        System.out.println("------");
     }
 
     protected void allocateFrames(int i) throws HyracksDataException {
