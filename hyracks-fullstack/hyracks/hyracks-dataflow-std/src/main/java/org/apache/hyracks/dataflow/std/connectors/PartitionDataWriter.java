@@ -43,7 +43,7 @@ public class PartitionDataWriter implements IFrameWriter {
     private final IHyracksTaskContext ctx;
     private boolean[] allocatedFrames;
     private boolean failed = false;
-    private int[] num;
+    //private int[] num;
 
     public PartitionDataWriter(IHyracksTaskContext ctx, int consumerPartitionCount, IPartitionWriterFactory pwFactory,
             RecordDescriptor recordDescriptor, ITuplePartitionComputer tpc) throws HyracksDataException {
@@ -55,7 +55,7 @@ public class PartitionDataWriter implements IFrameWriter {
         allocatedFrames = new boolean[consumerPartitionCount];
         appenders = new FrameTupleAppender[consumerPartitionCount];
         tupleAccessor = new FrameTupleAccessor(recordDescriptor);
-        num = new int[consumerPartitionCount];
+        //num = new int[consumerPartitionCount];
         initializeAppenders(pwFactory);
     }
 
@@ -132,8 +132,13 @@ public class PartitionDataWriter implements IFrameWriter {
                 allocateFrames(h);
             }
             FrameUtils.appendToWriter(pWriters[h], appenders[h], tupleAccessor, i);
-            num[h]++;
+            //num[h]++;
         }
+        /*System.out.println("------");
+        for (int i = 0; i < consumerPartitionCount; ++i) {
+            System.out.printf("partition %d: %d; ", i, num[i]);
+        }
+        System.out.println("\n------");*/
     }
 
     protected void allocateFrames(int i) throws HyracksDataException {

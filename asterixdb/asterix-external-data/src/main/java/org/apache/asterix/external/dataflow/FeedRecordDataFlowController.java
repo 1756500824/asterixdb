@@ -103,7 +103,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
                     }
                 }
             }
-            System.out.printf("------\nTotal tuples: %d\n------\n", incomingRecordsCount);
+            //System.out.printf("------\nTotal tuples: %d\n------\n", incomingRecordsCount);
         } catch (HyracksDataException e) {
             LOGGER.log(Level.WARN, "Exception during ingestion", e);
             if (e.getComponent() == ErrorCode.ASTERIX
@@ -178,7 +178,7 @@ public class FeedRecordDataFlowController<T> extends AbstractFeedDataFlowControl
     }
 
     private Throwable finish(Throwable failure) {
-        LOGGER.log(Level.DEBUG, getStats());
+//        LOGGER.log(Level.DEBUG, getStats());
         Throwable th = CleanupUtils.close(recordReader, failure);
         if (th == null) {
             try {

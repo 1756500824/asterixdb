@@ -109,6 +109,7 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
             appender.reset(frame, true);
             tAccessor.reset(buffer);
             int nTuple = tAccessor.getTupleCount();
+            parseNum += nTuple;
             int failedRecordsCount = 0;
             for (int tupleIndex = 0; tupleIndex < nTuple; ++tupleIndex) {
                 try {
@@ -123,6 +124,7 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
                 }
             }
             writer.nextFrame(appender.getBuffer());
+            // System.out.printf("This node has parsed %d tuples\n", parseNum);
             // flush();
         } else {
             writer.nextFrame(buffer);
@@ -147,7 +149,6 @@ public class FeedCollectOperatorNodePushable extends AbstractUnaryInputUnaryOutp
     private boolean parseAndForward(CharArrayRecord record) throws IOException {
         try {
             dataParser.parse(record, tb.getDataOutput());
-            parseNum++;
         } catch (Exception e) {
             LOGGER.log(Level.WARN, ExternalDataConstants.ERROR_PARSE_RECORD, e);
             //            feedLogManager.logRecord(record.toString(), ExternalDataConstants.ERROR_PARSE_RECORD);
