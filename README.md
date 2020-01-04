@@ -16,6 +16,10 @@
  ! specific language governing permissions and limitations
  ! under the License.
  !-->
+ 
+ All the commits I have pushed are in the master branch.
+ 
+ 
 <a href="http://asterixdb.apache.org"><img src="http://asterixdb.apache.org/img/asterixdb_tm.png" height=100></img></a>
 
 ## What is AsterixDB?
